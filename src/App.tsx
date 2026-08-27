@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "react"
 import { PromptBar } from "@/components/chat/PromptBar"
 import { Thinking } from "@/components/chat/Thinking"
 import { StreamingText } from "@/components/chat/StreamingText"
-type Msg = { id: string; role: "user" | "assistant"; text: string }
 type Turn = { id: string; user: string; reply?: string; done: boolean }
 const REPLY = "This is a mock reply returned for every message to verify the chat flow. The assistant first shows a Thinking state for about six seconds, then streams this paragraph as if it were generated live. In a real implementation this content would be replaced by an LLM response, with support for markdown, code blocks, and follow up actions. For now the text is intentionally longer so you can judge line height, wrapping, and readability in the final layout."
 
