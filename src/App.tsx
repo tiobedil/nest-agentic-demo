@@ -46,7 +46,7 @@ export default function App() {
           <PromptBar onSend={send} />
         </div>
       )}
-      <Agentation />
+      {(import.meta.env.DEV || import.meta.env.MODE === "staging") && <Agentation />}
     </div>
   )
 }
