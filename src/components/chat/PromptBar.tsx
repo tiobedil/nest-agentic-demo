@@ -1,8 +1,9 @@
 import { useRef, useLayoutEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ArrowUp, Paperclip, Mic } from "lucide-react"
+import { BorderBeam } from "border-beam"
 
-export function PromptBar({ onSend }: { onSend: (t: string) => void }) {
+export function PromptBar({ onSend, isThinking }: { onSend: (t: string) => void; isThinking?: boolean }) {
   const [draft, setDraft] = useState("")
   const ref = useRef<HTMLTextAreaElement>(null)
   const canSend = draft.trim().length > 0
@@ -15,7 +16,7 @@ export function PromptBar({ onSend }: { onSend: (t: string) => void }) {
     el.style.height = Math.min(el.scrollHeight, 6 * 24) + "px"
   }, [draft])
 
-  return (
+  const inner = (
     <div className="w-full max-w-2xl rounded-[20px] border border-border/15 bg-card p-2 shadow-[0_8px_32px_rgba(0,0,0,0.06)] flex flex-col">
       <textarea
         ref={ref}
@@ -37,4 +38,14 @@ export function PromptBar({ onSend }: { onSend: (t: string) => void }) {
       </div>
     </div>
   )
+
+  if (isThinking) {
+    return (
+      <BorderBeam size="md" colorVariant="ocean" className="w-full max-w-2xl">
+        {inner}
+      </BorderBeam>
+    )
+  }
+
+  return inner
 }

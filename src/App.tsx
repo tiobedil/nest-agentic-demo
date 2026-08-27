@@ -11,6 +11,7 @@ export default function App() {
   const [turns, setTurns] = useState<Turn[]>([])
   const bottomRef = useRef<HTMLDivElement>(null)
   const hasChat = turns.length > 0
+  const isThinking = turns.some(t => !t.done)
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }) }, [turns])
   const send = (t: string) => { setTurns(m => [...m, { id: Date.now().toString(), user: t, done: false }]) }
   const onDone = (id: string) => { setTurns(m => m.map(t => t.id === id ? { ...t, done: true, reply: REPLY } : t)) }
@@ -27,7 +28,7 @@ export default function App() {
                 <h2 className="text-[36px] font-semibold tracking-tight text-foreground/80 leading-none">How can I help you today?</h2>
                 <p className="text-sm text-muted-foreground">Start a conversation. The assistant replies with the same message for now.</p>
               </div>
-              <PromptBar onSend={send} />
+                <PromptBar onSend={send} isThinking={isThinking} />
             </div>
           </div>
         ) : (
@@ -48,7 +49,7 @@ export default function App() {
 
       {hasChat && (
         <div className="shrink-0 flex justify-center px-4 pb-6">
-          <PromptBar onSend={send} />
+          <PromptBar onSend={send} isThinking={isThinking} />
         </div>
       )}
       {(import.meta.env.DEV || import.meta.env.MODE === "staging") && <Agentation />}
