@@ -11,6 +11,7 @@ export default function App() {
   const [turns, setTurns] = useState<Turn[]>([])
   const bottomRef = useRef<HTMLDivElement>(null)
   const hasChat = turns.length > 0
+  const isThinking = turns.some(t => !t.done)
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }) }, [turns])
   const send = (t: string) => { setTurns(m => [...m, { id: Date.now().toString(), user: t, done: false }]) }
   const onDone = (id: string) => { setTurns(m => m.map(t => t.id === id ? { ...t, done: true, reply: REPLY } : t)) }
@@ -27,16 +28,18 @@ export default function App() {
                 <h2 className="text-[36px] font-semibold tracking-tight text-foreground/80 leading-none">How can I help you today?</h2>
                 <p className="text-sm text-muted-foreground">Start a conversation. The assistant replies with the same message for now.</p>
               </div>
-              <PromptBar onSend={send} />
+                <PromptBar onSend={send} isThinking={isThinking} />
             </div>
           </div>
         ) : (
-          <div className="mx-auto w-full max-w-2xl px-4 py-8 flex flex-col gap-5">
+          <div className="mx-auto w-full max-w-2xl px-4 py-8 flex flex-col gap-8">
             {turns.map(t => (
-              <div key={t.id} className="flex flex-col gap-3">
+              <div key={t.id} className="flex flex-col gap-8">
                 <div className="self-end max-w-[78%] rounded-2xl rounded-br-[6px] bg-violet-100 px-4 py-2.5 text-sm text-violet-950">{t.user}</div>
-                <Thinking done={t.done} onDone={() => onDone(t.id)} />
-                {t.done && t.reply && <div className="self-start w-full"><StreamingText text={t.reply} /></div>}
+                <div className="flex flex-col gap-4">
+                  <Thinking done={t.done} onDone={() => onDone(t.id)} />
+                  {t.done && t.reply && <div className="self-start w-full"><StreamingText text={t.reply} /></div>}
+                </div>
               </div>
             ))}
             <div ref={bottomRef} />
@@ -46,7 +49,7 @@ export default function App() {
 
       {hasChat && (
         <div className="shrink-0 flex justify-center px-4 pb-6">
-          <PromptBar onSend={send} />
+          <PromptBar onSend={send} isThinking={isThinking} />
         </div>
       )}
       {(import.meta.env.DEV || import.meta.env.MODE === "staging") && <Agentation />}

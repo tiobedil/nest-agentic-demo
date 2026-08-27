@@ -7,9 +7,9 @@ const chevron = Array.from({ length: 9 }, (_, i) => { const r = Math.floor(i / 3
 
 function LoaderGrid() {
   return (
-    <span aria-hidden className="grid shrink-0 grid-cols-[repeat(3,4px)] gap-[1.5px]">
+    <span aria-hidden className="grid shrink-0 grid-cols-[repeat(3,3px)] gap-[1px]">
       {chevron.map((delay, i) => (
-        <span key={i} className="size-[4px] rounded-[1px] bg-muted-foreground/60" style={{ opacity: 0.15, animation: `pixel-on 650ms ease-in-out ${delay}ms infinite` }} />
+        <span key={i} className="size-[3px] rounded-[1px] bg-muted-foreground/60" style={{ opacity: 0.15, animation: `pixel-on 650ms ease-in-out ${delay}ms infinite` }} />
       ))}
     </span>
   )
@@ -29,8 +29,8 @@ export function Thinking({ onDone, done: forcedDone }: { onDone?: () => void; do
   return (
     <div className="w-full">
       <button onClick={() => setOpen(v => !v)} className="flex w-fit items-center gap-2 text-left pl-[1px]">
-        <span className="flex size-[15px] shrink-0 items-center justify-center">{working ? <LoaderGrid /> : <Sparkle className="size-3.5 fill-muted-foreground/60 text-muted-foreground/60" />}</span>
-        <span className={working ? "bg-clip-text text-sm font-medium text-transparent" : "text-sm font-normal text-muted-foreground"} style={working ? { backgroundImage: "linear-gradient(90deg, color-mix(in oklab, var(--muted-foreground) 35%, transparent) 35%, var(--muted-foreground) 50%, color-mix(in oklab, var(--muted-foreground) 35%, transparent) 65%)", backgroundSize: "200% 100%", animation: "shimmer-text 1.4s linear infinite" } : undefined}>{working ? "Thinking" : "Thought for 4 seconds"}</span>
+        <span className="flex size-[13px] shrink-0 items-center justify-center">{working ? <LoaderGrid /> : <Sparkle className="size-3 text-muted-foreground/60" fill="none" />}</span>
+        <span className={working ? "bg-clip-text text-[12px] font-medium text-transparent" : "text-[12px] font-normal text-muted-foreground"} style={working ? { backgroundImage: "linear-gradient(90deg, color-mix(in oklab, var(--muted-foreground) 35%, transparent) 35%, var(--muted-foreground) 50%, color-mix(in oklab, var(--muted-foreground) 35%, transparent) 65%)", backgroundSize: "200% 100%", animation: "shimmer-text 1.4s linear infinite" } : undefined}>{working ? "Thinking" : "Thought for 4 seconds"}</span>
         <ChevronDown className={`size-4 text-muted-foreground/60 transition ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
