@@ -16,7 +16,7 @@ export function PromptBar({ onSend }: { onSend: (t: string) => void }) {
   }, [draft])
 
   return (
-    <div className="w-full max-w-2xl rounded-[20px] border border-border/30 bg-card p-2 shadow-[0_8px_32px_rgba(0,0,0,0.08)] flex flex-col">
+    <div className="w-full max-w-2xl rounded-[20px] border border-border/15 bg-card p-2 shadow-[0_8px_32px_rgba(0,0,0,0.06)] flex flex-col">
       <textarea
         ref={ref}
         value={draft}
