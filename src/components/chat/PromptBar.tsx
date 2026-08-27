@@ -34,7 +34,7 @@ export function PromptBar({ onSend, isThinking }: { onSend: (t: string) => void;
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon" className="size-8 rounded-full text-muted-foreground/60 hover:text-muted-foreground"><Mic className="size-4" /></Button>
           {isThinking ? (
-            <Button size="icon" variant="secondary" disabled className="size-8 rounded-full opacity-100"><Square className="size-3.5 fill-current" /></Button>
+            <Button size="icon" variant="secondary" disabled className="size-8 rounded-full border border-border/15 opacity-100"><Square className="size-3.5 fill-current" /></Button>
           ) : (
             <Button size="icon" disabled={!canSend} onClick={send} className="size-8 rounded-full"><ArrowUp className="size-4" /></Button>
           )}
