@@ -31,9 +31,9 @@ export default function App() {
             </div>
           </div>
         ) : (
-          <div className="mx-auto w-full max-w-2xl px-4 py-8 flex flex-col gap-5">
+          <div className="mx-auto w-full max-w-2xl px-4 py-8 flex flex-col gap-8">
             {turns.map(t => (
-              <div key={t.id} className="flex flex-col gap-3">
+              <div key={t.id} className="flex flex-col gap-8">
                 <div className="self-end max-w-[78%] rounded-2xl rounded-br-[6px] bg-violet-100 px-4 py-2.5 text-sm text-violet-950">{t.user}</div>
                 <Thinking done={t.done} onDone={() => onDone(t.id)} />
                 {t.done && t.reply && <div className="self-start w-full"><StreamingText text={t.reply} /></div>}

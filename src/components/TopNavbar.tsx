@@ -31,7 +31,7 @@ function Logo() {
 
 export function TopNavbar({
   notificationCount = 99,
-  avatarUrl,
+  avatarUrl = "/avatars/user.png",
 }: {
   notificationCount?: number
   avatarUrl?: string
@@ -40,12 +40,12 @@ export function TopNavbar({
     <header className="sticky top-0 z-50 flex h-[60px] items-center justify-between border-b border-[#2E303A26] bg-background px-8">
       <div className="flex items-center">
         <Logo />
-        <nav className="ml-[24px] hidden items-center gap-[24px] lg:flex">
+        <nav className="ml-[24px] hidden items-center gap-[4px] lg:flex">
           {NAV_ITEMS.map((item) => (
             <a
               key={item.label}
               href="#"
-              className={`flex items-center rounded-md px-2 py-1 text-[14px] transition-colors ${
+              className={`flex items-center rounded-md px-3 py-[6px] text-[14px] transition-colors ${
                 "active" in item && item.active
                   ? "bg-primary/10 font-semibold text-primary"
                   : "text-slate-800 hover:bg-gray-100 hover:text-slate-800"
