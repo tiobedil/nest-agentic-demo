@@ -19,14 +19,13 @@ export default function App() {
     <div className="flex h-dvh flex-col bg-white">
       <div className="flex-1 overflow-y-auto bg-white">
         {!hasChat ? (
-          <div className="flex h-full items-center justify-center p-6 bg-white">
+          <div className="flex h-full items-start justify-center p-6 pt-[240px] bg-white">
             <div className="w-full max-w-2xl flex flex-col items-center gap-8">
               <div className="text-center space-y-2">
-                <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground/80">How can I help you today?</h2>
+                <h2 className="text-[36px] font-semibold tracking-tight text-foreground/80 leading-none">How can I help you today?</h2>
                 <p className="text-sm text-muted-foreground">Start a conversation. The assistant replies with the same message for now.</p>
               </div>
               <PromptBar onSend={send} />
-              <p className="text-xs text-muted-foreground">Press Enter to send, Shift plus Enter for new line</p>
             </div>
           </div>
         ) : (
