@@ -29,7 +29,7 @@ export function Thinking({ onDone, done: forcedDone }: { onDone?: () => void; do
   return (
     <div className="w-full">
       <button onClick={() => setOpen(v => !v)} className="flex w-fit items-center gap-2 text-left pl-[1px]">
-        <span className="flex size-[13px] shrink-0 items-center justify-center">{working ? <LoaderGrid /> : <Sparkle className="size-3 fill-muted-foreground/60 text-muted-foreground/60" />}</span>
+        <span className="flex size-[13px] shrink-0 items-center justify-center">{working ? <LoaderGrid /> : <Sparkle className="size-3 text-muted-foreground/60" fill="none" />}</span>
         <span className={working ? "bg-clip-text text-[12px] font-medium text-transparent" : "text-[12px] font-normal text-muted-foreground"} style={working ? { backgroundImage: "linear-gradient(90deg, color-mix(in oklab, var(--muted-foreground) 35%, transparent) 35%, var(--muted-foreground) 50%, color-mix(in oklab, var(--muted-foreground) 35%, transparent) 65%)", backgroundSize: "200% 100%", animation: "shimmer-text 1.4s linear infinite" } : undefined}>{working ? "Thinking" : "Thought for 4 seconds"}</span>
         <ChevronDown className={`size-4 text-muted-foreground/60 transition ${open ? "rotate-180" : ""}`} />
       </button>
