@@ -35,8 +35,10 @@ export default function App() {
             {turns.map(t => (
               <div key={t.id} className="flex flex-col gap-8">
                 <div className="self-end max-w-[78%] rounded-2xl rounded-br-[6px] bg-violet-100 px-4 py-2.5 text-sm text-violet-950">{t.user}</div>
-                <Thinking done={t.done} onDone={() => onDone(t.id)} />
-                {t.done && t.reply && <div className="self-start w-full"><StreamingText text={t.reply} /></div>}
+                <div className="flex flex-col gap-4">
+                  <Thinking done={t.done} onDone={() => onDone(t.id)} />
+                  {t.done && t.reply && <div className="self-start w-full"><StreamingText text={t.reply} /></div>}
+                </div>
               </div>
             ))}
             <div ref={bottomRef} />

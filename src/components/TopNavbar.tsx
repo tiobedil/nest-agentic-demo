@@ -30,7 +30,7 @@ function Logo() {
 }
 
 export function TopNavbar({
-  notificationCount = 99,
+  notificationCount = 67,
   avatarUrl = "/avatars/user.png",
 }: {
   notificationCount?: number
