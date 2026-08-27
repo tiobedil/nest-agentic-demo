@@ -16,8 +16,9 @@ export function PromptBar({ onSend, isThinking }: { onSend: (t: string) => void;
     el.style.height = Math.min(el.scrollHeight, 6 * 24) + "px"
   }, [draft])
 
+  const innerShadow = "shadow-[0_8px_32px_rgba(0,0,0,0.06)]"
   const inner = (
-    <div className="w-full max-w-2xl rounded-[20px] border border-border/15 bg-card p-2 shadow-[0_8px_32px_rgba(0,0,0,0.06)] flex flex-col">
+    <div className={`w-full max-w-2xl rounded-[20px] border border-border/15 bg-card p-2 flex flex-col ${isThinking ? "" : innerShadow}`}>
       <textarea
         ref={ref}
         value={draft}
@@ -45,7 +46,7 @@ export function PromptBar({ onSend, isThinking }: { onSend: (t: string) => void;
 
   if (isThinking) {
     return (
-      <BorderBeam size="md" colorVariant="ocean" className="w-full max-w-2xl">
+      <BorderBeam size="md" colorVariant="ocean" className="w-full max-w-2xl shadow-[0_8px_32px_rgba(0,0,0,0.06)]" style={{ borderRadius: 20, overflow: "visible" } as React.CSSProperties}>
         {inner}
       </BorderBeam>
     )
