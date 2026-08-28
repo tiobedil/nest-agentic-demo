@@ -12,9 +12,9 @@ export function PromptBar({ onSend, isThinking }: { onSend: (t: string) => void;
   useLayoutEffect(() => {
     const el = ref.current
     if (!el) return
-    el.style.height = "0px"
+    el.style.height = "auto"
     el.style.height = Math.min(el.scrollHeight, 6 * 24) + "px"
-  }, [draft])
+  }, [draft, isThinking])
 
   const innerShadow = "shadow-[0_8px_32px_rgba(0,0,0,0.06)]"
   const inner = (
