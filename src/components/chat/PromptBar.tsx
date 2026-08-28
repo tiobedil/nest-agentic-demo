@@ -34,12 +34,15 @@ export function PromptBar({ onSend, isThinking }: { onSend: (t: string) => void;
   const innerShadow = "shadow-[0_8px_32px_rgba(0,0,0,0.06)]"
   const [showTopFade, setShowTopFade] = useState(false)
   const [showBottomFade, setShowBottomFade] = useState(false)
+  const [isScrollable, setIsScrollable] = useState(false)
 
-  // update fade visibility based on scroll
+  // update fade/scrollbar visibility based on scroll
   useLayoutEffect(() => {
     const el = ref.current
     if (!el) return
     const update = () => {
+      const scrollable = el.scrollHeight > el.clientHeight + 1
+      setIsScrollable(scrollable)
       setShowTopFade(el.scrollTop > 4)
       setShowBottomFade(el.scrollTop + el.clientHeight < el.scrollHeight - 4)
     }
@@ -63,7 +66,7 @@ export function PromptBar({ onSend, isThinking }: { onSend: (t: string) => void;
           onKeyDown={e => { if (isThinking) { if (e.key === "Enter" && !e.shiftKey) e.preventDefault(); return } if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send() } }}
           placeholder="Ask anything..."
           rows={1}
-          className="min-h-[54px] max-h-[144px] w-full resize-none bg-transparent px-3.5 py-3.5 text-[15.5px] leading-[1.625] outline-none placeholder:text-muted-foreground/50 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border/20 hover:[&::-webkit-scrollbar-thumb]:bg-border/30 [&::-webkit-scrollbar-track]:bg-transparent"
+          className={`min-h-[54px] max-h-[144px] w-full resize-none bg-transparent px-3.5 py-3.5 text-[15.5px] leading-[1.625] outline-none placeholder:text-muted-foreground/50 ${isScrollable ? "overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border/20 hover:[&::-webkit-scrollbar-thumb]:bg-border/30 [&::-webkit-scrollbar-track]:bg-transparent" : "overflow-hidden [&::-webkit-scrollbar]:hidden"}`}
           style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
         />
         {showTopFade && <div className="pointer-events-none absolute left-0 right-2 top-0 h-6 bg-gradient-to-b from-white to-transparent" />}
