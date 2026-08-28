@@ -27,12 +27,20 @@ export function PromptBar({ onSend, isThinking }: { onSend: (t: string) => void;
     const grew = draft.length > prevDraftLen.current
     prevDraftLen.current = draft.length
     el.style.height = "auto"
-    el.style.height = Math.min(el.scrollHeight, 6 * 24) + "px"
+    el.style.height = Math.min(el.scrollHeight, 144) + "px"
     if (draft) {
-      // When typing new rows that make it scrollable, stick to bottom
       if (grew && wasAtBottom) {
-        el.scrollTop = el.scrollHeight
-        scrollTopRef.current = el.scrollTop
+        // stick fully to bottom — use clamped max + rAF to avoid 1-2px gap from layout timing
+        const stickBottom = () => {
+          if (!ref.current) return
+          ref.current.scrollTop = ref.current.scrollHeight
+          scrollTopRef.current = ref.current.scrollTop
+        }
+        stickBottom()
+        requestAnimationFrame(() => {
+          stickBottom()
+          requestAnimationFrame(stickBottom)
+        })
       } else {
         el.scrollTop = scrollTopRef.current
         requestAnimationFrame(() => { if (ref.current && draft) ref.current.scrollTop = scrollTopRef.current })
