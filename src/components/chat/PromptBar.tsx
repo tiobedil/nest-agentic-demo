@@ -66,8 +66,8 @@ export function PromptBar({ onSend, isThinking }: { onSend: (t: string) => void;
           className="min-h-[54px] max-h-[144px] w-full resize-none bg-transparent px-3.5 py-3.5 text-[15.5px] leading-[1.625] outline-none placeholder:text-muted-foreground/50 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border/20 hover:[&::-webkit-scrollbar-thumb]:bg-border/30 [&::-webkit-scrollbar-track]:bg-transparent"
           style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
         />
-        {showTopFade && <div className="pointer-events-none absolute inset-x-0 top-0 h-6 bg-gradient-to-b from-white to-transparent" />}
-        {showBottomFade && <div className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-white to-transparent" />}
+        {showTopFade && <div className="pointer-events-none absolute left-0 right-2 top-0 h-6 bg-gradient-to-b from-white to-transparent" />}
+        {showBottomFade && <div className="pointer-events-none absolute left-0 right-2 bottom-0 h-6 bg-gradient-to-t from-white to-transparent" />}
       </div>
       <div className="flex shrink-0 items-center justify-between bg-white pt-1">
         <div className="flex items-center gap-1">
