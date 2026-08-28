@@ -9,11 +9,26 @@ export function PromptBar({ onSend, isThinking }: { onSend: (t: string) => void;
   const canSend = !isThinking && draft.trim().length > 0
   const send = () => { if (!canSend || isThinking) return; onSend(draft.trim()); setDraft("") }
 
+  const scrollTopRef = useRef(0)
+
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const onScroll = () => { if (draft) scrollTopRef.current = el.scrollTop }
+    el.addEventListener("scroll", onScroll)
+    return () => el.removeEventListener("scroll", onScroll)
+  }, [draft])
+
   useLayoutEffect(() => {
     const el = ref.current
     if (!el) return
     el.style.height = "auto"
     el.style.height = Math.min(el.scrollHeight, 6 * 24) + "px"
+    if (draft) {
+      el.scrollTop = scrollTopRef.current
+      // ref might remount via BorderBeam wrapper, restore again next frame
+      requestAnimationFrame(() => { if (ref.current && draft) ref.current.scrollTop = scrollTopRef.current })
+    }
   }, [draft, isThinking])
 
   const innerShadow = "shadow-[0_8px_32px_rgba(0,0,0,0.06)]"
