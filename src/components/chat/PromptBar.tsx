@@ -19,15 +19,24 @@ export function PromptBar({ onSend, isThinking }: { onSend: (t: string) => void;
     return () => el.removeEventListener("scroll", onScroll)
   }, [draft])
 
+  const prevDraftLen = useRef(0)
   useLayoutEffect(() => {
     const el = ref.current
     if (!el) return
+    const wasAtBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 4
+    const grew = draft.length > prevDraftLen.current
+    prevDraftLen.current = draft.length
     el.style.height = "auto"
     el.style.height = Math.min(el.scrollHeight, 6 * 24) + "px"
     if (draft) {
-      el.scrollTop = scrollTopRef.current
-      // ref might remount via BorderBeam wrapper, restore again next frame
-      requestAnimationFrame(() => { if (ref.current && draft) ref.current.scrollTop = scrollTopRef.current })
+      // When typing new rows that make it scrollable, stick to bottom
+      if (grew && wasAtBottom) {
+        el.scrollTop = el.scrollHeight
+        scrollTopRef.current = el.scrollTop
+      } else {
+        el.scrollTop = scrollTopRef.current
+        requestAnimationFrame(() => { if (ref.current && draft) ref.current.scrollTop = scrollTopRef.current })
+      }
     }
   }, [draft, isThinking])
 
