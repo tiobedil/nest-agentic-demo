@@ -36,7 +36,7 @@ export default function App() {
             {turns.map(t => (
               <div key={t.id} className="flex flex-col gap-8">
                 <div className="self-end max-w-[78%] rounded-2xl rounded-br-[6px] bg-violet-100 px-4 py-2.5 text-sm text-violet-950">{t.user}</div>
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-[12px]" style={{ gap: "12px" }}>
                   <Thinking done={t.done} onDone={() => onDone(t.id)} />
                   {t.done && t.reply && <div className="self-start w-full"><StreamingText text={t.reply} /></div>}
                 </div>
