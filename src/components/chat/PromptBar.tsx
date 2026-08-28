@@ -19,53 +19,102 @@ export function PromptBar({ onSend, isThinking }: { onSend: (t: string) => void;
     return () => el.removeEventListener("scroll", onScroll)
   }, [draft])
 
+  const prevDraftLen = useRef(0)
   useLayoutEffect(() => {
     const el = ref.current
     if (!el) return
+    const wasAtBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 4
+    const grew = draft.length > prevDraftLen.current
+    prevDraftLen.current = draft.length
     el.style.height = "auto"
-    el.style.height = Math.min(el.scrollHeight, 6 * 24) + "px"
+    el.style.height = Math.min(el.scrollHeight, 144) + "px"
     if (draft) {
-      el.scrollTop = scrollTopRef.current
-      // ref might remount via BorderBeam wrapper, restore again next frame
-      requestAnimationFrame(() => { if (ref.current && draft) ref.current.scrollTop = scrollTopRef.current })
+      if (grew && wasAtBottom) {
+        // stick fully to bottom — use clamped max + rAF to avoid 1-2px gap from layout timing
+        const stickBottom = () => {
+          if (!ref.current) return
+          ref.current.scrollTop = ref.current.scrollHeight
+          scrollTopRef.current = ref.current.scrollTop
+        }
+        stickBottom()
+        requestAnimationFrame(() => {
+          stickBottom()
+          requestAnimationFrame(stickBottom)
+        })
+      } else {
+        el.scrollTop = scrollTopRef.current
+        requestAnimationFrame(() => { if (ref.current && draft) ref.current.scrollTop = scrollTopRef.current })
+      }
     }
   }, [draft, isThinking])
 
   const innerShadow = "shadow-[0_8px_32px_rgba(0,0,0,0.06)]"
-  const inner = (
-    <div className={`w-full max-w-2xl rounded-[20px] border border-border/15 bg-card p-2 flex flex-col ${isThinking ? "" : innerShadow}`}>
-      <textarea
-        ref={ref}
-        value={draft}
-        onChange={e => setDraft(e.target.value)}
-        onKeyDown={e => { if (isThinking) { if (e.key === "Enter" && !e.shiftKey) e.preventDefault(); return } if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send() } }}
-        placeholder="Ask anything..."
-        rows={1}
-        className="min-h-12 max-h-[144px] w-full resize-none bg-transparent px-3 py-3 text-sm leading-relaxed outline-none placeholder:text-muted-foreground overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border/20 hover:[&::-webkit-scrollbar-thumb]:bg-border/30 [&::-webkit-scrollbar-track]:bg-transparent"
-      />
-      <div className="flex shrink-0 items-center justify-between pt-1">
+  const [showTopFade, setShowTopFade] = useState(false)
+  const [showBottomFade, setShowBottomFade] = useState(false)
+  const [isScrollable, setIsScrollable] = useState(false)
+
+  // update fade/scrollbar visibility based on scroll
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const update = () => {
+      const scrollable = el.scrollHeight > el.clientHeight + 1
+      setIsScrollable(scrollable)
+      setShowTopFade(el.scrollTop > 4)
+      setShowBottomFade(el.scrollTop + el.clientHeight < el.scrollHeight - 4)
+    }
+    update()
+    el.addEventListener("scroll", update)
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => { el.removeEventListener("scroll", update); ro.disconnect() }
+  }, [draft])
+
+  // Keep textarea mounted across isThinking toggles — wrapping with BorderBeam
+  // conditionally remounted the textarea and lost height/scroll/fade state.
+  // Use a single wrapper and overlay the beam when thinking.
+  const content = (
+    <>
+      <div className="relative flex flex-col">
+        <textarea
+          ref={ref}
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onKeyDown={e => { if (isThinking) { if (e.key === "Enter" && !e.shiftKey) e.preventDefault(); return } if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send() } }}
+          placeholder="Ask anything..."
+          rows={1}
+          className={`promptbar-scroll min-h-[54px] max-h-[144px] w-full resize-none bg-transparent px-3.5 py-3.5 text-[15.5px] leading-[1.625] outline-none placeholder:text-muted-foreground/50 ${isScrollable ? "overflow-y-auto [scrollbar-width:thin] [scrollbar-color:transparent_transparent] hover:[scrollbar-color:#e2e8f0_transparent]" : "overflow-hidden [scrollbar-width:none]"}`}
+          style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
+        />
+        {showTopFade && <div className="pointer-events-none absolute left-0 right-2 top-0 h-6 bg-gradient-to-b from-white to-transparent" />}
+        {showBottomFade && <div className="pointer-events-none absolute left-0 right-2 bottom-0 h-6 bg-gradient-to-t from-white to-transparent" />}
+      </div>
+      <div className="flex shrink-0 items-center justify-between bg-white pt-1">
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="size-8 rounded-full text-muted-foreground/60 hover:text-muted-foreground"><Paperclip className="size-4" /></Button>
+          <Button variant="ghost" size="icon" className="size-9 rounded-full text-muted-foreground/60 hover:text-muted-foreground"><Paperclip className="size-[18px]" /></Button>
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="size-8 rounded-full text-muted-foreground/60 hover:text-muted-foreground"><Mic className="size-4" /></Button>
+          <Button variant="ghost" size="icon" className="size-9 rounded-full text-muted-foreground/60 hover:text-muted-foreground"><Mic className="size-[18px]" /></Button>
           {isThinking ? (
-            <Button size="icon" variant="secondary" disabled className="size-8 rounded-full border border-border/15 opacity-100"><Square className="size-3.5 fill-current" /></Button>
+            <Button size="icon" variant="secondary" disabled className="size-9 rounded-full border border-border/15 opacity-100"><Square className="size-3.5 fill-current" /></Button>
           ) : (
-            <Button size="icon" disabled={!canSend} onClick={send} className="size-8 rounded-full"><ArrowUp className="size-4" /></Button>
+            <Button size="icon" disabled={!canSend} onClick={send} className={`size-9 rounded-full text-white ${canSend ? "bg-[oklch(60.6%_0.25_292.7)] hover:bg-[oklch(56%_0.25_292.7)]" : "bg-[#E8E8EC] text-white !opacity-100 hover:bg-[#E8E8EC]"}`}><ArrowUp className="size-[18px]" /></Button>
           )}
         </div>
       </div>
-    </div>
+    </>
   )
 
-  if (isThinking) {
-    return (
-      <BorderBeam size="md" colorVariant="ocean" className="w-full max-w-2xl shadow-[0_8px_32px_rgba(0,0,0,0.06)]" style={{ borderRadius: 20, overflow: "visible" } as React.CSSProperties}>
-        {inner}
-      </BorderBeam>
-    )
-  }
-
-  return inner
+  return (
+    <div className={`relative w-full max-w-2xl rounded-[20px] border border-[#2E303A14] bg-white flex flex-col overflow-clip px-2 pt-2 pb-2 ${innerShadow}`}>
+      {isThinking && (
+        <div className="pointer-events-none absolute inset-0 rounded-[20px] overflow-hidden">
+          <BorderBeam size="md" colorVariant="ocean" className="w-full h-full" style={{ borderRadius: 20 } as React.CSSProperties}>
+            <div className="w-full h-full" />
+          </BorderBeam>
+        </div>
+      )}
+      {content}
+    </div>
+  )
 }
