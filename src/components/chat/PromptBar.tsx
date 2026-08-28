@@ -83,7 +83,7 @@ export function PromptBar({ onSend, isThinking }: { onSend: (t: string) => void;
           onKeyDown={e => { if (isThinking) { if (e.key === "Enter" && !e.shiftKey) e.preventDefault(); return } if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send() } }}
           placeholder="Ask anything..."
           rows={1}
-          className={`promptbar-scroll min-h-[54px] max-h-[144px] w-full resize-none bg-transparent px-3.5 py-3.5 text-[15.5px] leading-[1.625] outline-none placeholder:text-muted-foreground/50 ${isScrollable ? "overflow-y-auto [scrollbar-width:thin] [scrollbar-color:#f1f5f9_transparent] hover:[scrollbar-color:#e2e8f0_transparent]" : "overflow-hidden [scrollbar-width:none]"}`}
+          className={`promptbar-scroll min-h-[54px] max-h-[144px] w-full resize-none bg-transparent px-3.5 py-3.5 text-[15.5px] leading-[1.625] outline-none placeholder:text-muted-foreground/50 ${isScrollable ? "overflow-y-auto [scrollbar-width:thin] [scrollbar-color:transparent_transparent] hover:[scrollbar-color:#f1f5f9_transparent]" : "overflow-hidden [scrollbar-width:none]"}`}
           style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
         />
         {showTopFade && <div className="pointer-events-none absolute left-0 right-2 top-0 h-6 bg-gradient-to-b from-white to-transparent" />}
