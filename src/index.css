@@ -210,6 +210,14 @@ body {
 @keyframes shimmer-text { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
 @keyframes pixel-on { 0%,100% { opacity: 0.15 } 50% { opacity: 1 } }
 
+/* PromptBar scrollbar — 3px, slate-100 default / slate-200 hover, always visible when scrollable */
+.promptbar-scroll::-webkit-scrollbar { width: 3px; }
+.promptbar-scroll::-webkit-scrollbar-track { background: transparent; }
+.promptbar-scroll::-webkit-scrollbar-thumb { background: #f1f5f9; border-radius: 9999px; }
+.promptbar-scroll:hover::-webkit-scrollbar-thumb { background: #e2e8f0; }
+.promptbar-scroll::-webkit-scrollbar-thumb:hover { background: #e2e8f0; }
+.promptbar-scroll::-webkit-scrollbar-thumb:active { background: #e2e8f0; }
+
 @layer base {
   * {
     @apply border-border outline-ring/50;}
