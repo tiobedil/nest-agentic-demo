@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react"
-import { TopNavbar } from "@/components/TopNavbar"
 import { PromptBar } from "@/components/chat/PromptBar"
 import { Thinking } from "@/components/chat/Thinking"
 import { StreamingText } from "@/components/chat/StreamingText"
@@ -16,9 +15,7 @@ export default function App() {
   const onDone = (id: string) => { setTurns(m => m.map(t => t.id === id ? { ...t, done: true, reply: REPLY } : t)) }
 
   return (
-    <div className="flex h-dvh flex-col bg-background">
-      <TopNavbar />
-
+    <div className="flex h-full flex-col bg-background">
       <div className="flex-1 overflow-y-auto bg-white">
         {!hasChat ? (
           <div className="flex h-full items-start justify-center p-6 pt-[240px] bg-white">

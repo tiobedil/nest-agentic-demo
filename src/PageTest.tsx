@@ -1,4 +1,3 @@
-import { TopNavbar } from "@/components/TopNavbar"
 import { useEffect, useRef, useState } from "react"
 import { Search, Filter, Download, Settings, Plus, MoreVertical, Sparkle, Copy, ArrowUpDown, UserPlus } from "lucide-react"
 import { Thinking } from "@/components/chat/Thinking"
@@ -157,9 +156,7 @@ function Building({ name, location, image }: { name: string; location: string; i
 export function PageTest() {
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]["label"]>("All Tasks")
   const [search, setSearch] = useState("")
-  const [chatTurns, setChatTurns] = useState<{ id: string; user: string; done: boolean }[]>([
-    { id: "seed-1", user: "test", done: true },
-  ])
+  const [chatTurns, setChatTurns] = useState<{ id: string; user: string; done: boolean }[]>([])
 
   const send = (t: string) => setChatTurns((m) => [...m, { id: Date.now().toString(), user: t, done: false }])
   const onThinkingDone = (id: string) => setChatTurns((m) => m.map((t) => (t.id === id ? { ...t, done: true } : t)))
@@ -196,15 +193,13 @@ export function PageTest() {
   }, [])
 
   return (
-    <div className="flex h-dvh flex-col overflow-x-hidden bg-background font-sans">
-      <TopNavbar />
-
+    <div className="flex h-full flex-col overflow-x-hidden bg-background font-sans">
       <div className="flex flex-1 min-h-0 overflow-x-hidden">
         {/* Main content */}
         <main className="flex flex-1 min-h-0 flex-col overflow-x-hidden bg-white">
           <div className="mx-auto w-full max-w-none flex-1 min-h-0 px-8 pt-6 pb-6 flex flex-col">
             <div className="flex items-center justify-between pb-2">
-              <h1 className="text-lg font-semibold leading-7 text-slate-700">Task Management</h1>
+              <h1 className="text-lg font-semibold leading-7 text-slate-700">Tasks</h1>
               <div className="flex items-center gap-2">
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
@@ -356,13 +351,20 @@ export function PageTest() {
           </div>
 
           <div className="flex-1 overflow-y-auto px-4 py-9 space-y-9">
-            {chatTurns.map((t) => (
-              <div key={t.id} className="flex flex-col gap-3">
-                <div className="self-end max-w-[78%] rounded-2xl rounded-br-md bg-violet-100 px-4 py-2.5 text-sm text-violet-950">{t.user}</div>
-                <Thinking done={t.done} onDone={() => onThinkingDone(t.id)} />
-                {t.done && <div className="w-full"><StreamingText text={REPLY} /></div>}
+            {chatTurns.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full gap-2 text-center">
+                <h3 className="text-[20px] font-semibold leading-[150%] text-slate-800">Welcome to Agent Chat</h3>
+                <p className="text-[16px] leading-[150%] text-slate-500">Ask me anything about your tasks — I&apos;m here to help you manage and resolve issues efficiently.</p>
               </div>
-            ))}
+            ) : (
+              chatTurns.map((t) => (
+                <div key={t.id} className="flex flex-col gap-3">
+                  <div className="self-end max-w-[78%] rounded-2xl rounded-br-md bg-violet-100 px-4 py-2.5 text-sm text-violet-950">{t.user}</div>
+                  <Thinking done={t.done} onDone={() => onThinkingDone(t.id)} />
+                  {t.done && <div className="w-full"><StreamingText text={REPLY} /></div>}
+                </div>
+              ))
+            )}
           </div>
 
           <div className="shrink-0 flex justify-center bg-white px-4 pb-6">
