@@ -86,31 +86,25 @@ function SlaProgressBar({ state }: { state: SlaState }) {
 function SlaCell({ sla }: { sla: { state: SlaState; label: string } }) {
   if (sla.state === "completed") {
     return (
-      <div className="flex h-[60px] items-center border-b border-[#cad5e2] px-4">
-        <div className="flex items-center gap-1.5">
-          <CircleCheck className="size-4" style={{ color: "#00A63E" }} />
-          <span className="text-[12px] font-semibold text-slate-700">{sla.label}</span>
-        </div>
+      <div className="flex h-[60px] items-center gap-1.5 border-b border-[#cad5e2] px-4">
+        <CircleCheck className="size-4 shrink-0" style={{ color: "#00A63E" }} />
+        <span className="text-[12px] font-semibold text-slate-700">{sla.label}</span>
       </div>
     )
   }
   if (sla.state === "completedBreach") {
     return (
-      <div className="flex h-[60px] items-center border-b border-[#cad5e2] px-4">
-        <div className="flex items-center gap-1.5">
-          <CircleX className="size-4" style={{ color: "#FB2C36" }} />
-          <span className="text-[12px] font-semibold text-slate-700">{sla.label}</span>
-        </div>
+      <div className="flex h-[60px] items-center gap-1.5 border-b border-[#cad5e2] px-4">
+        <CircleX className="size-4 shrink-0" style={{ color: "#FB2C36" }} />
+        <span className="text-[12px] font-semibold text-slate-700">{sla.label}</span>
       </div>
     )
   }
   if (sla.state === "breach") {
     return (
-      <div className="flex h-[60px] items-center border-b border-[#cad5e2] px-4">
-        <div className="flex items-center gap-1.5">
-          <CircleX className="size-4" style={{ color: "#FB2C36" }} />
-          <span className="text-[12px] font-semibold text-slate-700">{sla.label}</span>
-        </div>
+      <div className="flex h-[60px] items-center gap-1.5 border-b border-[#cad5e2] px-4">
+        <CircleX className="size-4 shrink-0" style={{ color: "#FB2C36" }} />
+        <span className="text-[12px] font-semibold text-slate-700">{sla.label}</span>
       </div>
     )
   }
@@ -263,7 +257,7 @@ export function PageTest() {
                 className="relative flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-[15px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
               >
                 <div className="flex">
-                  <div className="w-[148px] shrink-0">
+                  <div className="flex w-[148px] shrink-0 flex-col">
                     {TASKS.map((row) => (
                       <div key={row.id + "-num"} className="flex h-[60px] items-center gap-3 border-b border-[#cad5e2] px-4 last:border-b-0">
                         <span className="flex-1 truncate text-[14px] font-normal text-slate-700">{row.id}</span>
@@ -274,7 +268,7 @@ export function PageTest() {
                     ))}
                   </div>
 
-                  <div className="w-[250px] shrink-0">
+                  <div className="flex w-[250px] shrink-0 flex-col">
                     {TASKS.map((row) => (
                       <div key={row.id + "-issue"} className="flex h-[60px] items-center border-b border-[#cad5e2] px-4 last:border-b-0">
                         <span className="truncate text-[14px] font-normal text-slate-700">{row.title}</span>
@@ -282,7 +276,7 @@ export function PageTest() {
                     ))}
                   </div>
 
-                  <div className="w-[140px] shrink-0">
+                  <div className="flex w-[140px] shrink-0 flex-col">
                     {TASKS.map((row) => (
                       <div key={row.id + "-status"} className="flex h-[60px] items-center border-b border-[#cad5e2] px-4 last:border-b-0">
                         <StatusPill status={row.status} />
@@ -290,7 +284,7 @@ export function PageTest() {
                     ))}
                   </div>
 
-                  <div className="w-[208px] shrink-0">
+                  <div className="flex w-[208px] shrink-0 flex-col">
                     {TASKS.map((row) => (
                       <SlaCell key={row.id + "-sla"} sla={row.sla} />
                     ))}
