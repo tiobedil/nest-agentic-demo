@@ -1,10 +1,17 @@
 import { useEffect, useRef, useState } from "react"
-export function StreamingText({ text, speed = 20 }: { text: string; speed?: number }) {
+export function StreamingText({ text, speed = 20, onDone }: { text: string; speed?: number; onDone?: () => void }) {
   const words = text.split(" ")
   const [n, setN] = useState(0)
   const anchorRef = useRef<HTMLSpanElement>(null)
   useEffect(() => { setN(0) }, [text])
-  useEffect(() => { if (n < words.length) { const t = setTimeout(() => setN(v=>v+1), speed); return () => clearTimeout(t) } }, [n, words.length, speed])
+  useEffect(() => {
+    if (n < words.length) {
+      const t = setTimeout(() => setN(v=>v+1), speed)
+      return () => clearTimeout(t)
+    } else {
+      onDone?.()
+    }
+  }, [n, words.length, speed])
   // Auto-scroll ke bawah tiap kata baru muncul — cari scroll container terdekat lalu scroll smooth
   useEffect(() => {
     if (n === 0) return
