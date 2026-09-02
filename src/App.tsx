@@ -1,4 +1,3 @@
-import { Agentation } from "agentation"
 import { useEffect, useRef, useState } from "react"
 import { TopNavbar } from "@/components/TopNavbar"
 import { PromptBar } from "@/components/chat/PromptBar"
@@ -52,7 +51,6 @@ export default function App() {
           <PromptBar onSend={send} isThinking={isThinking} />
         </div>
       )}
-      {(import.meta.env.DEV || import.meta.env.MODE === "staging") && <Agentation />}
     </div>
   )
 }

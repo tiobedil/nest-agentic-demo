@@ -3,10 +3,10 @@ import { Bell } from "lucide-react"
 const NAV_ITEMS = [
   { label: "Properties", dropdown: true },
   { label: "Reservations", dropdown: true },
-  { label: "Inbox", active: true },
+  { label: "Inbox" },
   { label: "Contacts", dropdown: true },
   { label: "Smart Locks" },
-  { label: "Tasks" },
+  { label: "Tasks", active: true },
   { label: "Housekeeping", dropdown: true },
   { label: "Accounting", dropdown: true },
   { label: "Staff" },
