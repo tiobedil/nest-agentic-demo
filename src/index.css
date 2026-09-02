@@ -6,7 +6,7 @@
 :root {
   --text: #6b6375;
   --text-h: #08060d;
-  --bg: #fff;
+  --bg: #ffffff;
   --border: oklch(0.92 0.004 286.32);
   --code-bg: #f4f3ec;
   --accent: oklch(0.967 0.001 286.375);
@@ -34,7 +34,7 @@
     font-size: 16px;
   }
 
-  --background: oklch(1 0 0);
+  --background: #ffffff;
 
   --foreground: oklch(0.141 0.005 285.823);
 
@@ -101,7 +101,7 @@
   :root {
     --text: #9ca3af;
     --text-h: #f3f4f6;
-    --bg: #16171d;
+    --bg: #ffffff;
     --border: #2e303a;
     --code-bg: #1f2028;
     --accent: #c084fc;

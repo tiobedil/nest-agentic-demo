@@ -1,17 +1,25 @@
+import { NavLink } from "react-router-dom"
 import { Bell } from "lucide-react"
 
-const NAV_ITEMS = [
-  { label: "Properties", dropdown: true },
-  { label: "Reservations", dropdown: true },
-  { label: "Inbox", active: true },
-  { label: "Contacts", dropdown: true },
-  { label: "Smart Locks" },
-  { label: "Tasks" },
-  { label: "Housekeeping", dropdown: true },
-  { label: "Accounting", dropdown: true },
-  { label: "Staff" },
-  { label: "Payments" },
-] as const
+type NavItem = {
+  label: string
+  to: string
+  dropdown?: boolean
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { label: "Properties", to: "#", dropdown: true },
+  { label: "Reservations", to: "#", dropdown: true },
+  { label: "AI Agent", to: "/" },
+  { label: "Inbox", to: "#" },
+  { label: "Contacts", to: "#", dropdown: true },
+  { label: "Smart Locks", to: "#" },
+  { label: "Tasks", to: "/page-test" },
+  { label: "Housekeeping", to: "#", dropdown: true },
+  { label: "Accounting", to: "#", dropdown: true },
+  { label: "Staff", to: "#" },
+  { label: "Payments", to: "#" },
+]
 
 function ChevronDown() {
   return (
@@ -41,20 +49,36 @@ export function TopNavbar({
       <div className="flex items-center">
         <Logo />
         <nav className="ml-[24px] hidden items-center gap-[4px] lg:flex">
-          {NAV_ITEMS.map((item) => (
-            <a
-              key={item.label}
-              href="#"
-              className={`flex items-center rounded-md px-3 py-[6px] text-[14px] transition-colors ${
-                "active" in item && item.active
-                  ? "bg-primary/10 font-semibold text-primary"
-                  : "text-slate-800 hover:bg-gray-100 hover:text-slate-800"
-              }`}
-            >
-              {item.label}
-              {"dropdown" in item && item.dropdown && <ChevronDown />}
-            </a>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            if (item.to === "#") {
+              return (
+                <span
+                  key={item.label}
+                  className="flex cursor-default items-center rounded-md px-3 py-[6px] text-[14px] text-slate-800 transition-colors hover:bg-gray-100"
+                >
+                  {item.label}
+                  {item.dropdown && <ChevronDown />}
+                </span>
+              )
+            }
+            return (
+              <NavLink
+                key={item.label}
+                to={item.to}
+                end={item.to === "/"}
+                className={({ isActive }) =>
+                  `flex items-center rounded-md px-3 py-[6px] text-[14px] transition-colors ${
+                    isActive
+                      ? "bg-primary/10 font-semibold text-primary"
+                      : "text-slate-800 hover:bg-gray-100 hover:text-slate-800"
+                  }`
+                }
+              >
+                {item.label}
+                {item.dropdown && <ChevronDown />}
+              </NavLink>
+            )
+          })}
         </nav>
       </div>
 
