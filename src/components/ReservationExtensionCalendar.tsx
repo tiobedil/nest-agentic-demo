@@ -54,10 +54,10 @@ export function ReservationExtensionCalendar({
 
   const disabledModifier = useMemo(() => {
     const days: Date[] = []
-    const end = new Date(extensionFrom)
+    const end = new Date(reservationFrom)
     end.setHours(0, 0, 0, 0)
     end.setDate(end.getDate() - 1)
-    const start = new Date(extensionFrom)
+    const start = new Date(reservationFrom)
     start.setFullYear(start.getFullYear() - 10)
     const current = new Date(start)
     while (current < end) {
@@ -65,12 +65,19 @@ export function ReservationExtensionCalendar({
       current.setDate(current.getDate() + 1)
     }
     return days
-  }, [extensionFrom])
+  }, [reservationFrom])
 
   const handleSelect = (range: DateRange | undefined) => {
     if (!range) return
     setExtensionRange(range)
   }
+
+  const canGoToPreviousMonth = useMemo(() => {
+    const prevMonth = new Date(month.getFullYear(), month.getMonth() - 1, 1)
+    const reservationStart = new Date(reservationFrom)
+    reservationStart.setDate(1)
+    return prevMonth >= reservationStart
+  }, [month, reservationFrom])
 
   return (
     <div className="flex w-full flex-col gap-3 rounded-xl border border-slate-300 bg-white p-4 font-sans text-sm text-slate-700">
@@ -92,12 +99,13 @@ export function ReservationExtensionCalendar({
           <button
             type="button"
             onClick={() => setMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
-            className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            disabled={!canGoToPreviousMonth}
+            className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
           >
             <ChevronLeft size={16} />
           </button>
           <span
-            className="min-w-[120px] text-center text-[13px] font-semibold text-foreground"
+            className="min-w-[120px] text-center text-[13px] font-medium text-foreground"
             style={{ fontFamily: "var(--sans)", letterSpacing: "0.18px" }}
           >
             {format(month, "MMMM yyyy")}
@@ -120,8 +128,10 @@ export function ReservationExtensionCalendar({
         .rdp-root .rdp-selected .rdp-day_button { background-color: #a78bfa !important; color: white !important; }
         .rdp-root .rdp-extension .rdp-day_button { background-color: #ede9fe !important; color: #7c3aed !important; }
         .rdp-root .rdp-extension.rdp-selected .rdp-day_button { background-color: #a78bfa !important; color: white !important; }
-        .rdp-root .rdp-weeks { row-gap: 6px !important; }
-        .rdp-root .rdp-disabled .rdp-day_button:hover { background-color: #f1f5f9 !important; }
+        .rdp-root .rdp-disabled .rdp-day_button { opacity: 0.35 !important; cursor: not-allowed !important; }
+        .rdp-root .rdp-disabled .rdp-day_button:hover { background-color: transparent !important; color: inherit !important; }
+        .rdp-root .rdp-reservation .rdp-day_button:hover { background-color: #f1f5f9 !important; color: #64748b !important; }
+        .rdp-root .rdp-extension .rdp-day_button:hover { background-color: #ede9fe !important; color: #7c3aed !important; }
       `}</style>
 
       <Calendar
@@ -130,15 +140,14 @@ export function ReservationExtensionCalendar({
         onMonthChange={setMonth}
         selected={extensionRange}
         onSelect={handleSelect}
+        disabled={disabledModifier}
         modifiers={{
           reservation: reservationModifier,
           extension: extensionModifier,
-          disabledBeforeExtension: disabledModifier,
         }}
         modifiersClassNames={{
           reservation: "rdp-reservation",
           extension: "rdp-extension",
-          disabledBeforeExtension: "rdp-disabled",
         }}
         modifiersStyles={{
           reservation: { backgroundColor: "#f1f5f9", color: "#64748b", fontWeight: 500 },

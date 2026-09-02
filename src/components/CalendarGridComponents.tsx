@@ -36,6 +36,7 @@ function Weekdays({
       style={{
         display: "flex",
         width: "100%",
+        paddingBottom: "12px",
         ...props.style,
       }}
     >
@@ -90,7 +91,7 @@ function Weeks({
   return (
     <div
       {...props}
-      style={{ display: "flex", flexDirection: "column", width: "100%", ...props.style }}
+      style={{ display: "flex", flexDirection: "column", width: "100%", gap: "6px", ...props.style }}
     >
       {children}
     </div>

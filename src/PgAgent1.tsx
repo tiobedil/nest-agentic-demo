@@ -3,11 +3,18 @@ import { PromptBar } from "@/components/chat/PromptBar"
 import { Processing } from "@/components/chat/Processing"
 import { StreamingText } from "@/components/chat/StreamingText"
 import { ReservationSummary } from "@/components/ReservationSummary"
+import { ReservationExtensionCalendar } from "@/components/ReservationExtensionCalendar"
+import { CalendarSkeleton } from "@/components/CalendarSkeleton"
 
-type Turn = { id: string; user: string; done: boolean; streamed: boolean; loaded: boolean }
+type Turn = { id: string; user: string; done: boolean; streamed: boolean; loaded: boolean; calendarLoading: boolean; calendarLoaded: boolean }
 
 const STREAMING_REPLY =
   "I found one reservation for Amar, currently active. Here are the details along with a proposed extension — feel free to adjust the dates as needed."
+
+const RESERVATION_CHECK_IN = new Date(2024, 10, 10)
+const RESERVATION_CHECK_OUT = new Date(2024, 10, 15)
+const EXTENSION_CHECK_IN = new Date(2024, 10, 16)
+const EXTENSION_CHECK_OUT = new Date(2024, 10, 20)
 
 const ReservationSkeleton = () => (
   <div
@@ -53,7 +60,7 @@ export function PgAgent1() {
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }) }, [turns])
 
   const send = (t: string) => {
-    setTurns(m => [...m, { id: Date.now().toString(), user: t, done: false, streamed: false, loaded: false }])
+    setTurns(m => [...m, { id: Date.now().toString(), user: t, done: false, streamed: false, loaded: false, calendarLoading: false, calendarLoaded: false }])
   }
 
   const onProcessingDone = (id: string) => {
@@ -64,6 +71,12 @@ export function PgAgent1() {
     setTurns(m => m.map(t => t.id === id ? { ...t, streamed: true } : t))
     setTimeout(() => {
       setTurns(m => m.map(t => t.id === id ? { ...t, loaded: true } : t))
+      setTimeout(() => {
+        setTurns(m => m.map(t => t.id === id ? { ...t, calendarLoading: true } : t))
+        setTimeout(() => {
+          setTurns(m => m.map(t => t.id === id ? { ...t, calendarLoaded: true } : t))
+        }, 700)
+      }, 700)
     }, 700)
   }
 
@@ -96,18 +109,30 @@ export function PgAgent1() {
                       />
                       {t.streamed && !t.loaded && <ReservationSkeleton />}
                       {t.loaded && (
-                        <ReservationSummary
-                          name="Amar Sundaram"
-                          email="amar.sundaram@example.com"
-                          phone="+226-795-552-31"
-                          reservationId="D-15202023"
-                          checkInDate="November 10th, 2024"
-                          checkInTime="12:00 PM"
-                          checkOutDate="November 15th, 2024"
-                          checkOutTime="14:00 PM"
-                          property="DXB-LANA-SA-101"
-                          guests={2}
-                        />
+                        <>
+                          <ReservationSummary
+                            name="Amar Sundaram"
+                            email="amar.sundaram@example.com"
+                            phone="+226-795-552-31"
+                            reservationId="D-15202023"
+                            checkInDate="November 10th, 2024"
+                            checkInTime="12:00 PM"
+                            checkOutDate="November 15th, 2024"
+                            checkOutTime="14:00 PM"
+                            property="DXB-LANA-SA-101"
+                            guests={2}
+                          />
+                          {(!t.calendarLoading || !t.calendarLoaded) && <CalendarSkeleton />}
+                          {t.calendarLoaded && (
+                            <ReservationExtensionCalendar
+                              reservationFrom={RESERVATION_CHECK_IN}
+                              reservationTo={RESERVATION_CHECK_OUT}
+                              extensionFrom={EXTENSION_CHECK_IN}
+                              extensionTo={EXTENSION_CHECK_OUT}
+                              defaultMonth={RESERVATION_CHECK_IN}
+                            />
+                          )}
+                        </>
                       )}
                     </div>
                   )}
