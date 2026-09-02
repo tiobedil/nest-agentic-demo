@@ -7,7 +7,7 @@ import { ReservationSummary } from "@/components/ReservationSummary"
 type Turn = { id: string; user: string; done: boolean; streamed: boolean; loaded: boolean }
 
 const STREAMING_REPLY =
-  "Your AI agent has found an active reservation from Amar Sundaram. Here are the details below."
+  "I found one reservation for Amar, currently active. Here are the details along with a proposed extension — feel free to adjust the dates as needed."
 
 const ReservationSkeleton = () => (
   <div
