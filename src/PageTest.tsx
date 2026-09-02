@@ -1,6 +1,6 @@
 import { TopNavbar } from "@/components/TopNavbar"
 import { useEffect, useRef, useState } from "react"
-import { Search, Filter, Download, Settings, Plus, AlertTriangle, MoreVertical, Sparkle, Copy, ArrowUpDown, UserPlus, Check, X, CircleCheck, CircleX } from "lucide-react"
+import { Search, Filter, Download, Settings, Plus, MoreVertical, Sparkle, Copy, ArrowUpDown, UserPlus } from "lucide-react"
 import { Thinking } from "@/components/chat/Thinking"
 import { StreamingText } from "@/components/chat/StreamingText"
 import { PromptBar } from "@/components/chat/PromptBar"
@@ -87,24 +87,24 @@ function SlaCell({ sla }: { sla: { state: SlaState; label: string } }) {
   if (sla.state === "completed") {
     return (
       <div className="flex h-[60px] items-center gap-1.5 border-b border-[#cad5e2] px-4">
-        <CircleCheck className="size-4 shrink-0" style={{ color: "#00A63E" }} />
-        <span className="text-[12px] font-semibold text-slate-700">{sla.label}</span>
+        <svg className="size-4 shrink-0" style={{ display: "inline-block", verticalAlign: "middle", flexShrink: 0 }} viewBox="0 0 24 24" fill="none" stroke="#00A63E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+        <span className="text-[12px] font-semibold leading-none text-slate-700">{sla.label}</span>
       </div>
     )
   }
   if (sla.state === "completedBreach") {
     return (
       <div className="flex h-[60px] items-center gap-1.5 border-b border-[#cad5e2] px-4">
-        <CircleX className="size-4 shrink-0" style={{ color: "#FB2C36" }} />
-        <span className="text-[12px] font-semibold text-slate-700">{sla.label}</span>
+        <svg className="size-4 shrink-0" style={{ display: "inline-block", verticalAlign: "middle", flexShrink: 0 }} viewBox="0 0 24 24" fill="none" stroke="#FB2C36" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+        <span className="text-[12px] font-semibold leading-none text-slate-700">{sla.label}</span>
       </div>
     )
   }
   if (sla.state === "breach") {
     return (
       <div className="flex h-[60px] items-center gap-1.5 border-b border-[#cad5e2] px-4">
-        <CircleX className="size-4 shrink-0" style={{ color: "#FB2C36" }} />
-        <span className="text-[12px] font-semibold text-slate-700">{sla.label}</span>
+        <svg className="size-4 shrink-0" style={{ display: "inline-block", verticalAlign: "middle", flexShrink: 0 }} viewBox="0 0 24 24" fill="none" stroke="#FB2C36" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+        <span className="text-[12px] font-semibold leading-none text-slate-700">{sla.label}</span>
       </div>
     )
   }
