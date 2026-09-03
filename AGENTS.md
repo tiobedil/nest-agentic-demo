@@ -32,6 +32,7 @@ Mock chat reply used by `App.tsx` and reusable for demos:
 - Default page background is **pure white `#FFFFFF`** (token: `--background` / `bg-background`).
 - Mute text uses Tailwind `text-slate-500` / `text-slate-700` for hierarchy — avoid raw hex.
 - Primary brand purple is `violet-600` / `violet-100` (the shadcn `--primary` token resolves to a violet hue).
+- **MEMORI — Date picker & field styling (flow-2 /pgagent2, 2026-09-03)**: Untuk field date picker di bawah carousel PgAgent2 (Figma node 7231-440557, Nest — Reservation) **jangan gunakan border** (`border-0` / tanpa `border`), dan **jangan gunakan warna hitam pure `#000000`** untuk teks/icon/background. Gunakan hierarki `text-slate-700` / `text-slate-500` / `text-foreground` / `text-muted-foreground` dan `bg-slate-50` / `bg-white` / `bg-violet-50` sesuai design system. Aturan ini harus diingat oleh agent dan session lain ke depan — komponen shadcn yang digunakan (Calendar, Popover) juga harus disesuaikan tanpa border dan tanpa `#000000`.
 
 ## Routes
 

@@ -15,25 +15,25 @@ function LoaderGrid() {
   )
 }
 
-export function Processing({ onDone, done: forcedDone }: { onDone?: () => void; done?: boolean }) {
+export function Processing({ onDone, done: forcedDone, title, hideSteps, stages = STAGES, doneTitle }: { onDone?: () => void; done?: boolean; title?: string; hideSteps?: boolean; stages?: number[]; doneTitle?: string }) {
   const [stage, setStage] = useState(0)
-  const working = forcedDone ? false : stage < STAGES.length
+  const working = forcedDone ? false : stage < stages.length
   const [open, setOpen] = useState(!forcedDone)
   useEffect(() => { setOpen(!forcedDone ? true : false) }, [forcedDone])
   useEffect(() => {
     if (forcedDone) return
-    if (stage >= STAGES.length) { onDone?.(); return }
-    const t = setTimeout(() => setStage(s => s + 1), STAGES[stage])
+    if (stage >= stages.length) { onDone?.(); return }
+    const t = setTimeout(() => setStage(s => s + 1), stages[stage])
     return () => clearTimeout(t)
-  }, [stage, onDone, forcedDone])
+  }, [stage, onDone, forcedDone, stages])
   return (
     <div className="w-full">
       <button onClick={() => setOpen(v => !v)} className="flex w-fit items-center gap-2 text-left pl-[1px]">
         <span className="flex size-[13px] shrink-0 items-center justify-center">{working ? <LoaderGrid /> : <Sparkle className="size-3 text-muted-foreground/60" fill="none" />}</span>
-        <span className={working ? "bg-clip-text text-[12px] font-medium text-transparent" : "text-[12px] font-normal text-muted-foreground"} style={working ? { backgroundImage: "linear-gradient(90deg, color-mix(in oklab, var(--muted-foreground) 35%, transparent) 35%, var(--muted-foreground) 50%, color-mix(in oklab, var(--muted-foreground) 35%, transparent) 65%)", backgroundSize: "200% 100%", animation: "shimmer-text 1.4s linear infinite" } : undefined}>{working ? "Processing" : "Processed for 5 seconds"}</span>
-        <ChevronDown className={`size-4 text-muted-foreground/60 transition ${open ? "rotate-180" : ""}`} />
+        <span className={working ? "bg-clip-text text-[12px] font-medium text-transparent" : "text-[12px] font-normal text-muted-foreground"} style={working ? { backgroundImage: "linear-gradient(90deg, color-mix(in oklab, var(--muted-foreground) 35%, transparent) 35%, var(--muted-foreground) 50%, color-mix(in oklab, var(--muted-foreground) 35%, transparent) 65%)", backgroundSize: "200% 100%", animation: "shimmer-text 1.4s linear infinite" } : undefined}>{working ? (title ?? "Processing") : (doneTitle ?? title ?? "Processed for 5 seconds")}</span>
+        {!hideSteps && <ChevronDown className={`size-4 text-muted-foreground/60 transition ${open ? "rotate-180" : ""}`} />}
       </button>
-      {open && (
+      {!hideSteps && open && (
         <div className="relative mt-2 ml-[7px] border-l border-border/20 pl-5 flex flex-col gap-2 py-1">
           {rows.slice(0, forcedDone ? rows.length : Math.min(stage + 1, rows.length)).map((r, i) => (
             <div key={r} className="flex items-center gap-2 text-xs leading-none text-muted-foreground/70">

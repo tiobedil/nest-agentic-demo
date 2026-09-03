@@ -31,6 +31,97 @@ export type ReservationSummaryProps = React.ComponentProps<"div"> & {
   title?: string
 }
 
+export type SelectableReservationCardProps = Omit<React.ComponentProps<"button">, "children"> & {
+  name: string
+  email?: string
+  phone?: string
+  reservationId: string
+  checkInDate: string
+  checkInTime: string
+  checkOutDate: string
+  checkOutTime: string
+  property: string
+  guests?: number | string
+  selected?: boolean
+  onSelect?: () => void
+}
+
+export function SelectableReservationCard({
+  className,
+  name,
+  reservationId,
+  checkInDate,
+  checkInTime,
+  checkOutDate,
+  checkOutTime,
+  property,
+  guests = 2,
+  email,
+  phone,
+  selected = false,
+  onSelect,
+  ...props
+}: SelectableReservationCardProps) {
+  const initials = getInitials(name)
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
+      data-slot="selectable-reservation-card"
+      data-selected={selected}
+      className={cn(
+        "relative flex w-[300px] shrink-0 snap-start flex-col gap-4 rounded-xl border bg-white p-4 text-left font-sans text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+        selected ? "border-violet-600 bg-violet-50/40 shadow-sm" : "border-slate-200 hover:border-slate-300 hover:bg-slate-50/30",
+        "border",
+        className
+      )}
+      {...props}
+    >
+      <div className="flex w-full items-start gap-4">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-slate-400 text-[18px] font-medium leading-7 text-white" aria-hidden>
+            {initials}
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-[2px]">
+            <p className="overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-semibold leading-5 text-slate-700">{name}</p>
+            {email && <p className="w-full break-all text-[12px] font-medium leading-4 text-slate-500">{email}</p>}
+            {phone && <p className="w-full break-all text-[12px] font-medium leading-4 text-slate-500">{phone}</p>}
+          </div>
+        </div>
+      </div>
+
+      <div className={cn("flex w-full flex-row gap-2 rounded-lg p-2 text-[14px] leading-5", selected ? "bg-violet-100/70" : "bg-slate-50")}>
+        <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
+          <p className="w-full text-[12px] font-normal leading-4 text-slate-500">Guest</p>
+          <p className="w-full text-[14px] font-medium leading-5 text-slate-700">{guests}</p>
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
+          <p className="w-full text-[12px] font-normal leading-4 text-slate-500">Reservation ID</p>
+          <p className="w-full truncate text-[14px] font-medium leading-5 text-slate-700">{reservationId}</p>
+        </div>
+      </div>
+
+      <div className="h-px w-full bg-slate-200" />
+
+      <div className="flex w-full flex-col gap-4 font-medium leading-5">
+        <div className="flex min-w-0 flex-col items-start gap-1">
+          <p className="whitespace-nowrap text-[12px] leading-4 text-slate-500">Check-In</p>
+          <p className="text-[13px] leading-5 text-slate-700">{checkInDate}, {checkInTime}</p>
+        </div>
+        <div className="flex min-w-0 flex-col items-start gap-1">
+          <p className="whitespace-nowrap text-[12px] leading-4 text-slate-500">Check-Out</p>
+          <p className="text-[13px] leading-5 text-slate-700">{checkOutDate}, {checkOutTime}</p>
+        </div>
+        <div className="flex min-w-0 flex-col items-start gap-1">
+          <p className="whitespace-nowrap text-[12px] leading-4 text-slate-500">Property</p>
+          <p className="w-full text-[13px] leading-5 text-slate-700">{property}</p>
+        </div>
+      </div>
+    </button>
+  )
+}
+
 export function ReservationSummary({
   className,
   name,
