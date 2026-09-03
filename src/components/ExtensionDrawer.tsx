@@ -55,8 +55,12 @@ export function ExtensionDrawer({ open, onClose, reservationFrom, reservationTo,
   }, [open, onClose])
 
   useEffect(() => {
-    if (open) document.body.style.overflow = "hidden"
-    else document.body.style.overflow = ""
+    if (open) {
+      document.body.style.overflow = "hidden"
+    } else {
+      const t = setTimeout(() => { document.body.style.overflow = "" }, 300)
+      return () => clearTimeout(t)
+    }
     return () => { document.body.style.overflow = "" }
   }, [open])
 
@@ -81,14 +85,14 @@ export function ExtensionDrawer({ open, onClose, reservationFrom, reservationTo,
   const checkoutLabel = extensionTo ? format(extensionTo, "MM/dd/yyyy") : ""
 
   return createPortal(
-    <div className={`fixed inset-0 z-50 font-sans antialiased [font-synthesis:none] ${open ? "visible" : "invisible pointer-events-none"}`}>
+    <div className={`fixed inset-0 z-50 font-sans antialiased [font-synthesis:none] ${open ? "pointer-events-auto" : "pointer-events-none"}`}>
       <div
-        className={`absolute inset-0 bg-[rgba(0,0,0,0.3)] transition-opacity duration-200 ${open ? "opacity-100" : "opacity-0"}`}
+        className={`absolute inset-0 bg-[rgba(0,0,0,0.3)] transition-opacity duration-300 ${open ? "ease-out opacity-100" : "ease-in opacity-0"}`}
         onClick={onClose}
         aria-hidden
       />
       <div
-        className={`absolute right-0 top-0 flex h-full w-[650px] max-w-[92vw] flex-col bg-white shadow-xl transition-transform duration-300 ease-out ${open ? "translate-x-0" : "translate-x-full"}`}
+        className={`absolute right-0 top-0 flex h-full w-[650px] max-w-[92vw] flex-col bg-white shadow-xl transition-transform duration-300 will-change-transform ${open ? "ease-out translate-x-0" : "ease-in translate-x-full"}`}
         role="dialog"
         aria-modal="true"
         aria-label="Create Extension"
