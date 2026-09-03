@@ -5,6 +5,8 @@ import { StreamingText } from "@/components/chat/StreamingText"
 import { ReservationSummary } from "@/components/ReservationSummary"
 import { ReservationExtensionCalendar } from "@/components/ReservationExtensionCalendar"
 import { CalendarSkeleton } from "@/components/CalendarSkeleton"
+import { ExtensionDrawer } from "@/components/ExtensionDrawer"
+import type { DateRange } from "react-day-picker"
 
 type Turn = { id: string; user: string; done: boolean; streamed: boolean; loaded: boolean; calendarLoading: boolean; calendarLoaded: boolean }
 
@@ -54,6 +56,8 @@ const ReservationSkeleton = () => (
 
 export function PgAgent1() {
   const [turns, setTurns] = useState<Turn[]>([])
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [drawerRange, setDrawerRange] = useState<DateRange | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const hasChat = turns.length > 0
   const isThinking = turns.some(t => !t.calendarLoaded)
@@ -130,6 +134,10 @@ export function PgAgent1() {
                               extensionFrom={EXTENSION_CHECK_IN}
                               extensionTo={EXTENSION_CHECK_OUT}
                               defaultMonth={RESERVATION_CHECK_IN}
+                              onSubmit={range => {
+                                setDrawerRange(range)
+                                setDrawerOpen(true)
+                              }}
                             />
                           )}
                         </>
@@ -149,6 +157,15 @@ export function PgAgent1() {
           <PromptBar onSend={send} isThinking={isThinking} />
         </div>
       )}
+
+      <ExtensionDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        reservationFrom={RESERVATION_CHECK_IN}
+        reservationTo={RESERVATION_CHECK_OUT}
+        extensionFrom={drawerRange?.from ?? EXTENSION_CHECK_IN}
+        extensionTo={drawerRange?.to ?? drawerRange?.from ?? EXTENSION_CHECK_OUT}
+      />
     </div>
   )
 }
