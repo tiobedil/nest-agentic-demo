@@ -158,6 +158,8 @@ export function PgAgent2() {
                             <SelectableReservationCard
                               key={r.id}
                               name="Amar Sundaram"
+                              email="amar.sundaram@example.com"
+                              phone="+226-795-552-31"
                               reservationId={r.id}
                               checkInDate={r.checkInDate}
                               checkInTime={r.checkInTime}

@@ -33,6 +33,8 @@ export type ReservationSummaryProps = React.ComponentProps<"div"> & {
 
 export type SelectableReservationCardProps = Omit<React.ComponentProps<"button">, "children"> & {
   name: string
+  email?: string
+  phone?: string
   reservationId: string
   checkInDate: string
   checkInTime: string
@@ -54,6 +56,8 @@ export function SelectableReservationCard({
   checkOutTime,
   property,
   guests = 2,
+  email,
+  phone,
   selected = false,
   onSelect,
   ...props
@@ -74,21 +78,15 @@ export function SelectableReservationCard({
       )}
       {...props}
     >
-      {selected && (
-        <span className="absolute right-3 top-3 flex size-5 items-center justify-center text-violet-600">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12l5 5l10 -10" />
-          </svg>
-        </span>
-      )}
       <div className="flex w-full items-start gap-4">
         <div className="flex min-w-0 flex-1 items-start gap-3">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-slate-400 text-[18px] font-medium leading-7 text-white" aria-hidden>
             {initials}
           </div>
-          <div className="flex min-w-0 flex-col gap-[2px] pr-6">
+          <div className="flex min-w-0 flex-1 flex-col gap-[2px]">
             <p className="overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-semibold leading-5 text-slate-700">{name}</p>
-            <p className="overflow-hidden text-ellipsis whitespace-nowrap text-[12px] font-medium leading-4 text-slate-500">{reservationId}</p>
+            {email && <p className="w-full break-all text-[12px] font-medium leading-4 text-slate-500">{email}</p>}
+            {phone && <p className="w-full break-all text-[12px] font-medium leading-4 text-slate-500">{phone}</p>}
           </div>
         </div>
       </div>
@@ -99,21 +97,25 @@ export function SelectableReservationCard({
           <p className="w-full text-[14px] font-medium leading-5 text-slate-700">{guests}</p>
         </div>
         <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
-          <p className="w-full text-[12px] font-normal leading-4 text-slate-500">Property</p>
-          <p className="w-full truncate text-[14px] font-medium leading-5 text-slate-700">{property}</p>
+          <p className="w-full text-[12px] font-normal leading-4 text-slate-500">Reservation ID</p>
+          <p className="w-full truncate text-[14px] font-medium leading-5 text-slate-700">{reservationId}</p>
         </div>
       </div>
 
       <div className="h-px w-full bg-slate-200" />
 
-      <div className="flex w-full items-start gap-4 font-medium leading-5">
-        <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
+      <div className="flex w-full flex-col gap-4 font-medium leading-5">
+        <div className="flex min-w-0 flex-col items-start gap-1">
           <p className="whitespace-nowrap text-[12px] leading-4 text-slate-500">Check-In</p>
           <p className="text-[13px] leading-5 text-slate-700">{checkInDate}, {checkInTime}</p>
         </div>
-        <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
+        <div className="flex min-w-0 flex-col items-start gap-1">
           <p className="whitespace-nowrap text-[12px] leading-4 text-slate-500">Check-Out</p>
           <p className="text-[13px] leading-5 text-slate-700">{checkOutDate}, {checkOutTime}</p>
+        </div>
+        <div className="flex min-w-0 flex-col items-start gap-1">
+          <p className="whitespace-nowrap text-[12px] leading-4 text-slate-500">Property</p>
+          <p className="w-full text-[13px] leading-5 text-slate-700">{property}</p>
         </div>
       </div>
     </button>
