@@ -3,8 +3,9 @@ import { PromptBar } from "@/components/chat/PromptBar"
 import { Processing } from "@/components/chat/Processing"
 import { StreamingText } from "@/components/chat/StreamingText"
 import { SelectableReservationCard } from "@/components/ReservationSummary"
+import { ExtensionDateField } from "@/components/ExtensionDateField"
 
-type Turn = { id: string; user: string; done: boolean; streamed: boolean; loaded: boolean; selectedId: string | null }
+type Turn = { id: string; user: string; done: boolean; streamed: boolean; loaded: boolean; selectedId: string | null; extensionDate: Date | null }
 
 const STREAMING_REPLY = "Found three active reservations for Amar. Select the one you'd like to continue with the extension request."
 
@@ -110,7 +111,7 @@ export function PgAgent2() {
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }) }, [turns])
 
   const send = (t: string) => {
-    setTurns(m => [...m, { id: Date.now().toString(), user: t, done: false, streamed: false, loaded: false, selectedId: null }])
+    setTurns(m => [...m, { id: Date.now().toString(), user: t, done: false, streamed: false, loaded: false, selectedId: null, extensionDate: null }])
   }
 
   const onProcessingDone = (id: string) => {
@@ -126,6 +127,10 @@ export function PgAgent2() {
 
   const selectReservation = (turnId: string, reservationId: string) => {
     setTurns(m => m.map(t => (t.id === turnId ? { ...t, selectedId: reservationId } : t)))
+  }
+
+  const setExtensionDate = (turnId: string, date: Date | undefined) => {
+    setTurns(m => m.map(t => (t.id === turnId ? { ...t, extensionDate: date ?? null } : t)))
   }
 
   return (
@@ -153,25 +158,33 @@ export function PgAgent2() {
                       <StreamingText text={STREAMING_REPLY} speed={18} onDone={() => onStreamDone(t.id)} />
                       {t.streamed && !t.loaded && <SelectableSkeleton />}
                       {t.loaded && (
-                        <FadeScrollRow>
-                          {RESERVATIONS.map(r => (
-                            <SelectableReservationCard
-                              key={r.id}
-                              name="Amar Sundaram"
-                              email="amar.sundaram@example.com"
-                              phone="+226-795-552-31"
-                              reservationId={r.id}
-                              checkInDate={r.checkInDate}
-                              checkInTime={r.checkInTime}
-                              checkOutDate={r.checkOutDate}
-                              checkOutTime={r.checkOutTime}
-                              property={r.property}
-                              guests={r.guests}
-                              selected={t.selectedId === r.id}
-                              onSelect={() => selectReservation(t.id, r.id)}
-                            />
-                          ))}
-                        </FadeScrollRow>
+                        <div className="flex flex-col gap-4">
+                          <FadeScrollRow>
+                            {RESERVATIONS.map(r => (
+                              <SelectableReservationCard
+                                key={r.id}
+                                name="Amar Sundaram"
+                                email="amar.sundaram@example.com"
+                                phone="+226-795-552-31"
+                                reservationId={r.id}
+                                checkInDate={r.checkInDate}
+                                checkInTime={r.checkInTime}
+                                checkOutDate={r.checkOutDate}
+                                checkOutTime={r.checkOutTime}
+                                property={r.property}
+                                guests={r.guests}
+                                selected={t.selectedId === r.id}
+                                onSelect={() => selectReservation(t.id, r.id)}
+                              />
+                            ))}
+                          </FadeScrollRow>
+                          <ExtensionDateField
+                            value={t.extensionDate ?? undefined}
+                            onChange={d => setExtensionDate(t.id, d)}
+                            label="New check-out date"
+                            placeholder="Select new check-out date"
+                          />
+                        </div>
                       )}
                     </div>
                   )}
