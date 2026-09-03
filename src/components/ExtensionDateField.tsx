@@ -129,7 +129,7 @@ export function ExtensionDateField({
               weeks: "rdp-weeks flex w-full flex-col gap-1",
               week: "rdp-week flex w-full",
               day: "rdp-day flex flex-1 items-center justify-center p-0 text-sm",
-              day_button: "rdp-day_button size-8 rounded-lg text-sm font-normal text-slate-700 hover:bg-slate-50",
+              day_button: "rdp-day_button size-8 rounded-lg text-sm font-normal text-slate-700 hover:bg-slate-100",
               selected: "rdp-selected",
               today: "rdp-today font-semibold",
               outside: "rdp-outside opacity-40",
@@ -149,9 +149,17 @@ export function ExtensionDateField({
               day_button: { fontFamily: "var(--sans)", fontWeight: 400, width: "32px", height: "32px" },
             }}
             modifiersClassNames={{
-              selected: "bg-violet-600 text-white hover:bg-violet-600 hover:text-white",
+              selected: "rdp-selected",
+            }}
+            modifiersStyles={{
+              selected: { backgroundColor: "transparent" },
             }}
           />
+          <style>{`
+            .rdp-root .rdp-day:not(.rdp-disabled):not(.rdp-selected) .rdp-day_button:hover { background: #f1f5f9 !important; }
+            .rdp-root .rdp-selected .rdp-day_button { background: #ddd6fe !important; color: #8b5cf6 !important; }
+            .rdp-root .rdp-selected .rdp-day_button:hover { background: #ddd6fe !important; color: #8b5cf6 !important; }
+          `}</style>
           <div className="flex items-center justify-between pt-3">
             <button
               type="button"
