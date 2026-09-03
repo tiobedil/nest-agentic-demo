@@ -4,8 +4,15 @@ import { Processing } from "@/components/chat/Processing"
 import { StreamingText } from "@/components/chat/StreamingText"
 import { SelectableReservationCard } from "@/components/ReservationSummary"
 import { ExtensionDateField } from "@/components/ExtensionDateField"
+import { addDays } from "date-fns"
 
 type Turn = { id: string; user: string; done: boolean; streamed: boolean; loaded: boolean; selectedId: string | null; extensionDate: Date | null }
+
+const CHECKOUT_DATES: Record<string, Date> = {
+  "D-15202023": new Date(2024, 10, 15),
+  "D-15202024": new Date(2024, 10, 22),
+  "D-15202025": new Date(2024, 11, 5),
+}
 
 const STREAMING_REPLY = "Found three active reservations for Amar. Select the one you'd like to continue with the extension request."
 
@@ -126,11 +133,18 @@ export function PgAgent2() {
   }
 
   const selectReservation = (turnId: string, reservationId: string) => {
-    setTurns(m => m.map(t => (t.id === turnId ? { ...t, selectedId: reservationId } : t)))
+    setTurns(m => m.map(t => (t.id === turnId ? { ...t, selectedId: reservationId, extensionDate: null } : t)))
   }
 
   const setExtensionDate = (turnId: string, date: Date | undefined) => {
     setTurns(m => m.map(t => (t.id === turnId ? { ...t, extensionDate: date ?? null } : t)))
+  }
+
+  const getMinDate = (selectedId: string | null) => {
+    if (!selectedId) return undefined
+    const checkout = CHECKOUT_DATES[selectedId]
+    if (!checkout) return undefined
+    return addDays(checkout, 1)
   }
 
   return (
@@ -182,7 +196,9 @@ export function PgAgent2() {
                             value={t.extensionDate ?? undefined}
                             onChange={d => setExtensionDate(t.id, d)}
                             label="New check-out date"
-                            placeholder="Select new check-out date"
+                            placeholder={t.selectedId ? "Select new check-out date" : "Select a reservation first"}
+                            disabled={!t.selectedId}
+                            minDate={getMinDate(t.selectedId)}
                           />
                         </div>
                       )}

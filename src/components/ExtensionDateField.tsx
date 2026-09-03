@@ -23,6 +23,7 @@ export type ExtensionDateFieldProps = {
   label?: string
   placeholder?: string
   disabled?: boolean
+  minDate?: Date
   className?: string
 }
 
@@ -32,26 +33,37 @@ export function ExtensionDateField({
   label = "Extension date",
   placeholder = "Select date",
   disabled,
+  minDate,
   className,
 }: ExtensionDateFieldProps) {
   const [open, setOpen] = React.useState(false)
-  const [month, setMonth] = React.useState<Date>(value ?? new Date())
+  const [month, setMonth] = React.useState<Date>(() => value ?? minDate ?? new Date())
   React.useEffect(() => {
     if (value) setMonth(value)
-  }, [value])
+    else if (minDate) setMonth(minDate)
+  }, [value, minDate])
+
+  const prevDisabled = React.useMemo(() => {
+    if (disabled) return true
+    if (!minDate) return false
+    const monthStart = new Date(month.getFullYear(), month.getMonth(), 1)
+    const minMonthStart = new Date(minDate.getFullYear(), minDate.getMonth(), 1)
+    return monthStart <= minMonthStart
+  }, [month, minDate, disabled])
 
   return (
     <div className={cn("flex w-full flex-col gap-2 font-sans", className)}>
       <p className="text-sm font-medium leading-5 text-slate-700">{label}</p>
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={v => { if (!disabled) setOpen(v) }}>
         <PopoverTrigger asChild>
           <button
             type="button"
             disabled={disabled}
             className={cn(
-              "flex w-full items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-left text-sm transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/20 disabled:opacity-50",
+              "flex w-full items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-left text-sm transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/20 disabled:cursor-not-allowed disabled:opacity-50",
               !value && "text-slate-500",
-              value && "text-slate-700"
+              value && "text-slate-700",
+              disabled && "hover:bg-slate-50"
             )}
           >
             <span className="flex items-center gap-3">
@@ -62,15 +74,18 @@ export function ExtensionDateField({
                 {value ? format(value, "PPP") : placeholder}
               </span>
             </span>
-            <ChevronDown size={16} className={cn("shrink-0 text-slate-500 transition-transform", open && "rotate-180")} />
+            <ChevronDown size={16} className={cn("shrink-0 text-slate-500 transition-transform", open && !disabled && "rotate-180", disabled && "opacity-40")} />
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-[308px] p-4" align="start" sideOffset={8}>
           <div className="flex h-8 w-full items-center justify-between">
             <button
               type="button"
+              disabled={prevDisabled}
               onClick={() => setMonth(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))}
-              className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-500"
+              className={cn(
+                "flex size-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-500 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent"
+              )}
               aria-label="Previous month"
             >
               <ChevronLeft size={16} className="text-slate-400" />
@@ -78,8 +93,11 @@ export function ExtensionDateField({
             <span className="text-sm font-medium leading-none text-slate-700">{format(month, "MMMM yyyy")}</span>
             <button
               type="button"
+              disabled={disabled}
               onClick={() => setMonth(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))}
-              className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-500"
+              className={cn(
+                "flex size-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-500 disabled:cursor-not-allowed disabled:opacity-30"
+              )}
               aria-label="Next month"
             >
               <ChevronRight size={16} className="text-slate-400" />
@@ -90,6 +108,7 @@ export function ExtensionDateField({
             month={month}
             onMonthChange={setMonth}
             selected={value}
+            disabled={minDate ? { before: minDate } : undefined}
             onSelect={d => {
               onChange?.(d)
               if (d) setOpen(false)
