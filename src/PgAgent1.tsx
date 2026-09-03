@@ -56,7 +56,7 @@ export function PgAgent1() {
   const [turns, setTurns] = useState<Turn[]>([])
   const bottomRef = useRef<HTMLDivElement>(null)
   const hasChat = turns.length > 0
-  const isThinking = turns.some(t => !t.done)
+  const isThinking = turns.some(t => !t.calendarLoaded)
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }) }, [turns])
 
   const send = (t: string) => {
