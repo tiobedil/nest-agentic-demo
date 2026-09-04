@@ -114,8 +114,6 @@ const SelectableSkeleton = () => (
 )
 
 function ConfirmationModal({ open, onClose, extensionDate, originalCheckout, selectedId, step, onSend, payLink, onCopyLink }: { open: boolean; onClose: () => void; extensionDate: Date; originalCheckout: Date; selectedId: string; step: "form" | "sending" | "sent"; onSend: () => void; payLink: string; onCopyLink: () => void }) {
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose() }
@@ -127,7 +125,6 @@ function ConfirmationModal({ open, onClose, extensionDate, originalCheckout, sel
     else document.body.style.overflow = ""
     return () => { document.body.style.overflow = "" }
   }, [open])
-  if (!mounted) return null
   const reservation = RESERVATIONS.find(r => r.id === selectedId)
   const nights = Math.max(1, differenceInCalendarDays(extensionDate, originalCheckout))
   const holdExpiry = addDays(extensionDate, 1)
@@ -533,7 +530,10 @@ export function PgAgent2() {
     const orig = CHECKOUT_DATES[t.selectedId]
     if (!orig) return
     setConfirmModal({ turnId: t.id, extensionDate: t.extensionDate, originalCheckout: orig, selectedId: t.selectedId, step: "form", payLink: "/pay/7823947234" })
-    setConfirmOpen(true)
+    setConfirmOpen(false)
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setConfirmOpen(true))
+    })
   }
   const closeConfirm = () => {
     setConfirmOpen(false)
