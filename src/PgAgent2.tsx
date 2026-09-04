@@ -4,6 +4,7 @@ import { Processing } from "@/components/chat/Processing"
 import { StreamingText } from "@/components/chat/StreamingText"
 import { SelectableReservationCard } from "@/components/ReservationSummary"
 import { ExtensionDateField } from "@/components/ExtensionDateField"
+import { Check, CreditCard, Bitcoin, Landmark, X, Settings2 } from "lucide-react"
 import { addDays, differenceInCalendarDays } from "date-fns"
 import { cn } from "@/lib/utils"
 
@@ -249,6 +250,48 @@ function ExtensionInvoiceCard({ extensionDate, originalCheckout }: { extensionDa
           </div>
         </div>
       </div>
+      <div className="h-px w-full shrink-0 bg-[#cad5e2]" />
+      <div className="flex w-full flex-col gap-[16px]">
+        <div className="flex flex-col gap-[2px]">
+          <p className="text-[16px] font-bold leading-[24px] text-[#314158]">Accepted Payment Method</p>
+          <p className="text-[14px] font-medium leading-[20px] text-[#314158]">Online Payment</p>
+        </div>
+        <div className="flex w-full gap-[16px]">
+          <div className="flex flex-1 items-center gap-[16px]">
+            <span className="flex size-[24px] shrink-0 items-center justify-center">
+              <Check className="size-[24px] text-[#314158]" />
+            </span>
+            <span className="flex items-center gap-[8px]">
+              <CreditCard className="size-[20px] text-[#314158]" />
+              <span className="text-[14px] font-medium leading-[20px] text-[#314158]">Credit Card</span>
+            </span>
+          </div>
+          <div className="flex flex-1 items-center gap-[16px]">
+            <span className="flex size-[24px] shrink-0 items-center justify-center">
+              <Check className="size-[24px] text-[#314158]" />
+            </span>
+            <span className="flex items-center gap-[8px]">
+              <Bitcoin className="size-[20px] text-[#314158]" />
+              <span className="text-[14px] font-medium leading-[20px] text-[#314158]">Cryptocurrency</span>
+            </span>
+          </div>
+        </div>
+        <div className="flex h-[24px] items-center gap-[8px]">
+          <X className="size-[24px] text-[#90a1b9]" />
+          <span className="flex items-center gap-[8px]">
+            <Landmark className="size-[20px] text-[#90a1b9]" />
+            <span className="text-[14px] font-medium leading-[20px] text-[#90a1b9]">Bank Transfer</span>
+          </span>
+        </div>
+        <button
+          type="button"
+          className="flex h-[40px] w-fit items-center justify-center gap-[8px] rounded-[8px] border border-[#cad5e2] bg-white px-[14px] text-[16px] font-semibold leading-[24px] text-[#314158] transition-colors hover:bg-[#f8fafc]"
+        >
+          <Settings2 className="size-[20px]" />
+          Edit payment method
+        </button>
+      </div>
+      <div className="h-px w-full shrink-0 bg-[#cad5e2]" />
       <button
         type="button"
         className="flex h-[40px] w-full items-center justify-center gap-[8px] rounded-[8px] border border-[#7f22fe] bg-[#8e51ff] px-[14px] text-[16px] font-semibold leading-[24px] text-white transition-colors hover:bg-[#7f22fe]"
