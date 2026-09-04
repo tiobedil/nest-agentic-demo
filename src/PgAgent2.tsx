@@ -259,27 +259,29 @@ function ExtensionInvoiceCard({ extensionDate, originalCheckout }: { extensionDa
         <div className="flex w-full gap-[16px]">
           <div className="flex flex-1 items-center gap-[16px]">
             <span className="flex size-[24px] shrink-0 items-center justify-center">
-              <Check className="size-[24px] text-[#314158]" />
+              <Check className="size-[20px] text-[#8e51ff]" />
             </span>
             <span className="flex items-center gap-[8px]">
-              <CreditCard className="size-[20px] text-[#314158]" />
+              <CreditCard className="size-[20px] shrink-0 text-[#314158]" />
               <span className="text-[14px] font-medium leading-[20px] text-[#314158]">Credit Card</span>
             </span>
           </div>
           <div className="flex flex-1 items-center gap-[16px]">
             <span className="flex size-[24px] shrink-0 items-center justify-center">
-              <Check className="size-[24px] text-[#314158]" />
+              <Check className="size-[20px] text-[#8e51ff]" />
             </span>
             <span className="flex items-center gap-[8px]">
-              <Bitcoin className="size-[20px] text-[#314158]" />
+              <Bitcoin className="size-[20px] shrink-0 text-[#314158]" />
               <span className="text-[14px] font-medium leading-[20px] text-[#314158]">Cryptocurrency</span>
             </span>
           </div>
         </div>
-        <div className="flex h-[24px] items-center gap-[8px]">
-          <X className="size-[24px] text-[#90a1b9]" />
+        <div className="flex w-full items-center gap-[16px]">
+          <span className="flex size-[24px] shrink-0 items-center justify-center">
+            <X className="size-[20px] text-[#90a1b9]" />
+          </span>
           <span className="flex items-center gap-[8px]">
-            <Landmark className="size-[20px] text-[#90a1b9]" />
+            <Landmark className="size-[20px] shrink-0 text-[#90a1b9]" />
             <span className="text-[14px] font-medium leading-[20px] text-[#90a1b9]">Bank Transfer</span>
           </span>
         </div>
