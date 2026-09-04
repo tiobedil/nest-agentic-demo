@@ -323,7 +323,7 @@ export function PgAgent2() {
               <div key={t.id} className="flex flex-col gap-8">
                 <div className="self-end max-w-[78%] rounded-2xl rounded-br-[6px] bg-violet-100 px-4 py-2.5 text-sm text-violet-950">{t.user}</div>
                 <div className="flex flex-col gap-[12px]">
-                  <Processing done={t.done} onDone={() => onProcessingDone(t.id)} title="Finding reservation based on the query" doneTitle="Finding for ~1 second" hideSteps stages={[1500]} />
+                  <Processing done={t.done} onDone={() => onProcessingDone(t.id)} title="Finding reservation based on the query" doneTitle="Found for 1 second" hideSteps stages={[1500]} />
                   {t.done && (
                     <div className="flex flex-col gap-[12px]">
                       <StreamingText text={STREAMING_REPLY} speed={18} onDone={() => onStreamDone(t.id)} />
@@ -369,6 +369,7 @@ export function PgAgent2() {
                                 done={t.invoiceLoaded}
                                 onDone={() => onInvoiceDone(t.id)}
                                 title="Generating invoice"
+                                doneTitle="Generated for 2 seconds"
                                 hideSteps
                                 stages={[2000]}
                               />
