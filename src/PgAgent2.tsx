@@ -4,9 +4,11 @@ import { Processing } from "@/components/chat/Processing"
 import { StreamingText } from "@/components/chat/StreamingText"
 import { SelectableReservationCard } from "@/components/ReservationSummary"
 import { ExtensionDateField } from "@/components/ExtensionDateField"
-import { addDays } from "date-fns"
+import { Check, CreditCard, Bitcoin, Landmark, X, Settings2 } from "lucide-react"
+import { addDays, differenceInCalendarDays } from "date-fns"
+import { cn } from "@/lib/utils"
 
-type Turn = { id: string; user: string; done: boolean; streamed: boolean; loaded: boolean; selectedId: string | null; extensionDate: Date | null }
+type Turn = { id: string; user: string; done: boolean; streamed: boolean; loaded: boolean; selectedId: string | null; extensionDate: Date | null; invoiceGenerating: boolean; invoiceLoaded: boolean }
 
 const CHECKOUT_DATES: Record<string, Date> = {
   "D-15202023": new Date(2024, 10, 15),
@@ -110,15 +112,205 @@ const SelectableSkeleton = () => (
   </FadeScrollRow>
 )
 
+function ExtensionInvoiceCard({ extensionDate, originalCheckout }: { extensionDate: Date; originalCheckout: Date }) {
+  const [rate, setRate] = useState<"new" | "original">("new")
+  const nights = Math.max(1, differenceInCalendarDays(extensionDate, originalCheckout))
+  const newRate = 160
+  const originalRate = 125
+  const rentPerNight = rate === "new" ? newRate : originalRate
+  const rent = nights * rentPerNight
+  const bookingFee = 50
+  const serviceFee = 5
+  const tourismFee = 10
+  const subTotal = rent + bookingFee + serviceFee + tourismFee
+  const vat = Math.round(subTotal * 0.05 * 100) / 100
+  const total = Math.round((subTotal + vat) * 100) / 100
+  return (
+    <div className="flex w-full flex-col gap-[24px] rounded-[16px] border border-[#cad5e2] bg-white p-[16px] font-sans">
+      <div className="flex w-full flex-col gap-[12px]">
+        <button
+          type="button"
+          onClick={() => setRate("new")}
+          className={cn(
+            "flex w-full items-center gap-[16px] rounded-[12px] border p-[16px] text-left transition-colors",
+            rate === "new" ? "border-[#7f22fe] bg-[#f5f3ff]" : "border-[#cad5e2] bg-[#f8fafc]"
+          )}
+        >
+          <span
+            className={cn(
+              "flex size-[24px] shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+              rate === "new" ? "border-[#7f22fe] bg-white" : "border-[#cad5e2] bg-white"
+            )}
+          >
+            {rate === "new" && <span className="size-[12px] rounded-full bg-[#7f22fe]" />}
+          </span>
+          <div className="flex flex-[1_0_0] flex-col gap-[4px] min-w-0">
+            <p className="text-[14px] font-medium leading-[20px] text-[#314158]">Apply New Rates</p>
+            <p className="text-[12px] font-normal leading-[16px] text-[#62748e]">Uses the current calendar rates for the extension nights</p>
+            <p className="text-[12px] font-normal leading-[16px] text-[#62748e]">{nights} nights × AED {newRate.toFixed(2)}</p>
+          </div>
+          <p className="shrink-0 text-[14px] font-semibold leading-[20px] text-[#314158]">AED {(nights * newRate).toFixed(2)}</p>
+        </button>
+        <button
+          type="button"
+          onClick={() => setRate("original")}
+          className={cn(
+            "flex w-full items-center gap-[16px] rounded-[12px] border p-[16px] text-left transition-colors",
+            rate === "original" ? "border-[#7f22fe] bg-[#f5f3ff]" : "border-[#cad5e2] bg-[#f8fafc]"
+          )}
+        >
+          <span
+            className={cn(
+              "flex size-[24px] shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+              rate === "original" ? "border-[#7f22fe] bg-white" : "border-[#cad5e2] bg-white"
+            )}
+          >
+            {rate === "original" && <span className="size-[12px] rounded-full bg-[#7f22fe]" />}
+          </span>
+          <div className="flex flex-[1_0_0] flex-col gap-[4px] min-w-0">
+            <p className="text-[14px] font-medium leading-[20px] text-[#314158]">Keep Original Rate</p>
+            <p className="text-[12px] font-normal leading-[16px] text-[#62748e]">Extend stay at the same nightly rate as the original reservation</p>
+            <p className="text-[12px] font-normal leading-[16px] text-[#62748e]">{nights} nights × AED {originalRate.toFixed(2)}</p>
+          </div>
+          <p className="shrink-0 text-[14px] font-semibold leading-[20px] text-[#314158]">AED {(nights * originalRate).toFixed(2)}</p>
+        </button>
+      </div>
+      <div className="h-px w-full shrink-0 bg-[#cad5e2]" />
+      <div className="flex w-full flex-col gap-[8px] rounded-[12px] border border-[#cad5e2] bg-[#f8fafc] p-[8px]">
+        <div className="flex h-[40px] w-full items-center justify-center pl-[8px]">
+          <p className="flex flex-[1_0_0] flex-col justify-center text-[14px] font-semibold leading-[20px] text-[#314158]">Extension Invoice</p>
+        </div>
+        <div className="flex w-full flex-col overflow-clip rounded-[8px] border border-[#cad5e2] bg-white">
+          <div className="flex w-full flex-col gap-[12px] px-[8px] py-[12px]">
+            <div className="flex w-full items-center gap-[16px] text-[14px]">
+              <div className="flex flex-[1_0_0] flex-col justify-center text-[#62748e]">
+                <p className="font-normal leading-[20px]">Rent ({nights} nights × AED {rentPerNight.toFixed(2)})</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-[4px] font-medium text-[#314158] whitespace-nowrap">
+                <p className="leading-[20px]">AED</p>
+                <p className="leading-[20px]">{rent.toFixed(2)}</p>
+              </div>
+            </div>
+            <div className="flex w-full items-center gap-[16px] text-[14px]">
+              <div className="flex flex-[1_0_0] flex-col justify-center text-[#62748e]">
+                <p className="font-normal leading-[20px]">Booking fee</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-[4px] font-medium text-[#314158] whitespace-nowrap">
+                <p className="leading-[20px]">AED</p>
+                <p className="leading-[20px]">{bookingFee.toFixed(2)}</p>
+              </div>
+            </div>
+            <div className="flex w-full items-center gap-[16px] text-[14px]">
+              <div className="flex flex-[1_0_0] flex-col justify-center text-[#62748e]">
+                <p className="font-normal leading-[20px]">Service fee</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-[4px] font-medium text-[#314158] whitespace-nowrap">
+                <p className="leading-[20px]">AED</p>
+                <p className="leading-[20px]">{serviceFee.toFixed(2)}</p>
+              </div>
+            </div>
+            <div className="flex w-full items-center gap-[16px] text-[14px]">
+              <div className="flex flex-[1_0_0] flex-col justify-center text-[#62748e]">
+                <p className="font-normal leading-[20px]">Tourism fee</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-[4px] font-medium text-[#314158] whitespace-nowrap">
+                <p className="leading-[20px]">AED</p>
+                <p className="leading-[20px]">{tourismFee.toFixed(2)}</p>
+              </div>
+            </div>
+            <div className="h-px w-full shrink-0 bg-[#cad5e2]" />
+            <div className="flex w-full items-center gap-[16px] text-[14px]">
+              <div className="flex flex-[1_0_0] flex-col justify-center text-[#62748e]">
+                <p className="font-normal leading-[20px]">Sub Total</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-[4px] font-medium text-[#314158] whitespace-nowrap">
+                <p className="leading-[20px]">AED</p>
+                <p className="leading-[20px]">{subTotal.toFixed(2)}</p>
+              </div>
+            </div>
+            <div className="h-px w-full shrink-0 bg-[#cad5e2]" />
+            <div className="flex w-full items-center gap-[16px] text-[14px]">
+              <div className="flex flex-[1_0_0] flex-col justify-center text-[#62748e]">
+                <p className="font-normal leading-[20px]">VAT (5%)</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-[4px] font-medium text-[#314158] whitespace-nowrap">
+                <p className="leading-[20px]">AED</p>
+                <p className="leading-[20px]">{vat.toFixed(2)}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="flex h-[36px] w-full items-center rounded-[8px] bg-[#ede9fe] p-[8px]">
+          <div className="flex w-full items-center gap-[16px] text-[14px] font-semibold leading-[20px] text-[#4d179a]">
+            <p className="flex flex-[1_0_0] flex-col justify-center">Total Payment Due</p>
+            <div className="flex shrink-0 items-center gap-[4px] whitespace-nowrap">
+              <p className="leading-[20px]">AED</p>
+              <p className="leading-[20px]">{total.toFixed(2)}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="h-px w-full shrink-0 bg-[#cad5e2]" />
+      <div className="flex w-full flex-col gap-[16px]">
+        <div className="flex flex-col gap-[2px]">
+          <p className="text-[16px] font-bold leading-[24px] text-[#314158]">Accepted Payment Method</p>
+          <p className="text-[14px] font-medium leading-[20px] text-[#314158]">Online Payment</p>
+        </div>
+        <div className="flex w-full gap-[16px]">
+          <div className="flex flex-1 items-center gap-[16px]">
+            <span className="flex size-[24px] shrink-0 items-center justify-center">
+              <Check className="size-[24px] text-[#314158]" />
+            </span>
+            <span className="flex items-center gap-[8px]">
+              <CreditCard className="size-[20px] text-[#314158]" />
+              <span className="text-[14px] font-medium leading-[20px] text-[#314158]">Credit Card</span>
+            </span>
+          </div>
+          <div className="flex flex-1 items-center gap-[16px]">
+            <span className="flex size-[24px] shrink-0 items-center justify-center">
+              <Check className="size-[24px] text-[#314158]" />
+            </span>
+            <span className="flex items-center gap-[8px]">
+              <Bitcoin className="size-[20px] text-[#314158]" />
+              <span className="text-[14px] font-medium leading-[20px] text-[#314158]">Cryptocurrency</span>
+            </span>
+          </div>
+        </div>
+        <div className="flex h-[24px] items-center gap-[8px]">
+          <X className="size-[24px] text-[#90a1b9]" />
+          <span className="flex items-center gap-[8px]">
+            <Landmark className="size-[20px] text-[#90a1b9]" />
+            <span className="text-[14px] font-medium leading-[20px] text-[#90a1b9]">Bank Transfer</span>
+          </span>
+        </div>
+        <button
+          type="button"
+          className="flex h-[40px] w-fit items-center justify-center gap-[8px] rounded-[8px] border border-[#cad5e2] bg-white px-[14px] text-[16px] font-semibold leading-[24px] text-[#314158] transition-colors hover:bg-[#f8fafc]"
+        >
+          <Settings2 className="size-[20px]" />
+          Edit payment method
+        </button>
+      </div>
+      <div className="h-px w-full shrink-0 bg-[#cad5e2]" />
+      <button
+        type="button"
+        className="flex h-[40px] w-full items-center justify-center gap-[8px] rounded-[8px] border border-[#7f22fe] bg-[#8e51ff] px-[14px] text-[16px] font-semibold leading-[24px] text-white transition-colors hover:bg-[#7f22fe]"
+      >
+        Create Extension
+      </button>
+    </div>
+  )
+}
+
 export function PgAgent2() {
   const [turns, setTurns] = useState<Turn[]>([])
   const bottomRef = useRef<HTMLDivElement>(null)
   const hasChat = turns.length > 0
-  const isThinking = turns.some(t => !t.loaded)
+  const isThinking = turns.some(t => !t.loaded || t.invoiceGenerating)
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }) }, [turns])
 
   const send = (t: string) => {
-    setTurns(m => [...m, { id: Date.now().toString(), user: t, done: false, streamed: false, loaded: false, selectedId: null, extensionDate: null }])
+    setTurns(m => [...m, { id: Date.now().toString(), user: t, done: false, streamed: false, loaded: false, selectedId: null, extensionDate: null, invoiceGenerating: false, invoiceLoaded: false }])
   }
 
   const onProcessingDone = (id: string) => {
@@ -133,11 +325,19 @@ export function PgAgent2() {
   }
 
   const selectReservation = (turnId: string, reservationId: string) => {
-    setTurns(m => m.map(t => (t.id === turnId ? { ...t, selectedId: reservationId, extensionDate: null } : t)))
+    setTurns(m => m.map(t => (t.id === turnId ? { ...t, selectedId: reservationId, extensionDate: null, invoiceGenerating: false, invoiceLoaded: false } : t)))
   }
 
   const setExtensionDate = (turnId: string, date: Date | undefined) => {
-    setTurns(m => m.map(t => (t.id === turnId ? { ...t, extensionDate: date ?? null } : t)))
+    if (!date) {
+      setTurns(m => m.map(t => (t.id === turnId ? { ...t, extensionDate: null, invoiceGenerating: false, invoiceLoaded: false } : t)))
+      return
+    }
+    setTurns(m => m.map(t => (t.id === turnId ? { ...t, extensionDate: date, invoiceGenerating: true, invoiceLoaded: false } : t)))
+  }
+
+  const onInvoiceDone = (id: string) => {
+    setTurns(m => m.map(t => (t.id === id ? { ...t, invoiceGenerating: false, invoiceLoaded: true } : t)))
   }
 
   const getMinDate = (selectedId: string | null) => {
@@ -166,40 +366,61 @@ export function PgAgent2() {
               <div key={t.id} className="flex flex-col gap-8">
                 <div className="self-end max-w-[78%] rounded-2xl rounded-br-[6px] bg-violet-100 px-4 py-2.5 text-sm text-violet-950">{t.user}</div>
                 <div className="flex flex-col gap-[12px]">
-                  <Processing done={t.done} onDone={() => onProcessingDone(t.id)} title="Finding reservation based on the query" doneTitle="Finding for ~1 second" hideSteps stages={[1500]} />
+                  <Processing done={t.done} onDone={() => onProcessingDone(t.id)} title="Finding reservation based on the query" doneTitle="Found for 1 second" hideSteps stages={[1500]} />
                   {t.done && (
                     <div className="flex flex-col gap-[12px]">
                       <StreamingText text={STREAMING_REPLY} speed={18} onDone={() => onStreamDone(t.id)} />
                       {t.streamed && !t.loaded && <SelectableSkeleton />}
                       {t.loaded && (
                         <div className="flex flex-col gap-4">
-                          <FadeScrollRow>
-                            {RESERVATIONS.map(r => (
-                              <SelectableReservationCard
-                                key={r.id}
-                                name="Amar Sundaram"
-                                email="amar.sundaram@example.com"
-                                phone="+226-795-552-31"
-                                reservationId={r.id}
-                                checkInDate={r.checkInDate}
-                                checkInTime={r.checkInTime}
-                                checkOutDate={r.checkOutDate}
-                                checkOutTime={r.checkOutTime}
-                                property={r.property}
-                                guests={r.guests}
-                                selected={t.selectedId === r.id}
-                                onSelect={() => selectReservation(t.id, r.id)}
+                          <div className={cn((t.invoiceGenerating || t.invoiceLoaded) && "pointer-events-none opacity-60")}>
+                            <FadeScrollRow>
+                              {RESERVATIONS.map(r => (
+                                <SelectableReservationCard
+                                  key={r.id}
+                                  name="Amar Sundaram"
+                                  email="amar.sundaram@example.com"
+                                  phone="+226-795-552-31"
+                                  reservationId={r.id}
+                                  checkInDate={r.checkInDate}
+                                  checkInTime={r.checkInTime}
+                                  checkOutDate={r.checkOutDate}
+                                  checkOutTime={r.checkOutTime}
+                                  property={r.property}
+                                  guests={r.guests}
+                                  selected={t.selectedId === r.id}
+                                  onSelect={() => !(t.invoiceGenerating || t.invoiceLoaded) && selectReservation(t.id, r.id)}
+                                  disabled={t.invoiceGenerating || t.invoiceLoaded}
+                                  className={cn((t.invoiceGenerating || t.invoiceLoaded) && "opacity-60")}
+                                />
+                              ))}
+                            </FadeScrollRow>
+                          </div>
+                          <div className={cn((t.invoiceGenerating || t.invoiceLoaded) && "pointer-events-none opacity-60")}>
+                            <ExtensionDateField
+                              value={t.extensionDate ?? undefined}
+                              onChange={d => setExtensionDate(t.id, d)}
+                              label="New check-out date"
+                              placeholder={t.selectedId ? "Select new check-out date" : "Select a reservation first"}
+                              disabled={!t.selectedId || t.invoiceGenerating || t.invoiceLoaded}
+                              minDate={getMinDate(t.selectedId)}
+                            />
+                          </div>
+                          {t.extensionDate && (
+                            <div className="pt-[20px]">
+                              <Processing
+                                done={t.invoiceLoaded}
+                                onDone={() => onInvoiceDone(t.id)}
+                                title="Generating invoice"
+                                doneTitle="Generated for 2 seconds"
+                                hideSteps
+                                stages={[2000]}
                               />
-                            ))}
-                          </FadeScrollRow>
-                          <ExtensionDateField
-                            value={t.extensionDate ?? undefined}
-                            onChange={d => setExtensionDate(t.id, d)}
-                            label="New check-out date"
-                            placeholder={t.selectedId ? "Select new check-out date" : "Select a reservation first"}
-                            disabled={!t.selectedId}
-                            minDate={getMinDate(t.selectedId)}
-                          />
+                            </div>
+                          )}
+                          {t.invoiceLoaded && t.extensionDate && t.selectedId && CHECKOUT_DATES[t.selectedId] && (
+                            <ExtensionInvoiceCard extensionDate={t.extensionDate} originalCheckout={CHECKOUT_DATES[t.selectedId]!} />
+                          )}
                         </div>
                       )}
                     </div>

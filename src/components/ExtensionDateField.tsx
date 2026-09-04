@@ -60,17 +60,15 @@ export function ExtensionDateField({
             type="button"
             disabled={disabled}
             className={cn(
-              "flex w-full items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-left text-sm transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/20 disabled:cursor-not-allowed disabled:opacity-50",
-              !value && "text-slate-500",
-              value && "text-slate-700",
+              "flex w-full items-center justify-between rounded-xl bg-slate-50 pb-[8px] pl-[8px] pr-[16px] pt-[8px] text-left text-base text-[16px] font-normal text-slate-500 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/20 disabled:cursor-not-allowed disabled:opacity-50",
               disabled && "hover:bg-slate-50"
             )}
           >
-            <span className="flex items-center gap-3">
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white text-slate-500 shadow-sm">
+            <span className="flex items-center gap-3 text-base text-[16px] font-normal text-slate-500">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white text-base text-[16px] font-normal text-slate-500 shadow-sm">
                 <CalendarIcon size={16} />
               </span>
-              <span className="text-sm font-medium leading-5">
+              <span className="text-base text-[16px] font-normal leading-5 text-slate-500">
                 {value ? format(value, "PPP") : placeholder}
               </span>
             </span>

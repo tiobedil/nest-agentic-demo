@@ -224,4 +224,14 @@ body {
   body {
     @apply bg-background text-foreground;}
   html {
-    @apply font-sans;}}
+    @apply font-sans;}
+  button,
+  a,
+  [role="button"] {
+    cursor: pointer;
+  }
+  button:disabled,
+  a:disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }}

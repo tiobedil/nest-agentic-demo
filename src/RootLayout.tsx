@@ -1,4 +1,5 @@
 import { Agentation } from "agentation"
+import { InterfaceKit } from "interface-kit/react"
 import { Outlet } from "react-router-dom"
 import { TopNavbar } from "@/components/TopNavbar"
 
@@ -10,6 +11,7 @@ export function RootLayout() {
         <Outlet />
       </div>
       {import.meta.env.DEV && <Agentation />}
+      {import.meta.env.DEV && <InterfaceKit />}
     </div>
   )
 }
