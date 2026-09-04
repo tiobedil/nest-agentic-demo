@@ -141,11 +141,20 @@ function ConfirmationModal({ open, onClose, extensionDate, originalCheckout, sel
   const total = Math.round((subTotal + vat) * 100) / 100
   return createPortal(
     <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 font-sans antialiased [font-synthesis:none] ${open ? "pointer-events-auto" : "pointer-events-none"}`}>
-      <div className={`absolute inset-0 bg-[rgba(0,0,0,0.3)] ${open ? "animate-in fade-in-0 duration-200" : "animate-out fade-out-0 duration-150"}`} onClick={onClose} aria-hidden />
       <div
+        data-state={open ? "open" : "closed"}
         className={cn(
-          "relative flex w-[600px] max-w-[92vw] flex-col overflow-hidden rounded-[8px] bg-white shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.1),0px_4px_6px_-2px_rgba(0,0,0,0.05)]",
-          open ? "animate-in fade-in-0 zoom-in-95 duration-200" : "animate-out fade-out-0 zoom-out-95 duration-150",
+          "absolute inset-0 bg-[rgba(0,0,0,0.3)] transition-opacity will-change-[opacity]",
+          open ? "duration-200 ease-out opacity-100" : "duration-150 ease-in opacity-0"
+        )}
+        onClick={onClose}
+        aria-hidden
+      />
+      <div
+        data-state={open ? "open" : "closed"}
+        className={cn(
+          "relative flex w-[600px] max-w-[92vw] flex-col overflow-hidden rounded-[8px] bg-white shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.1),0px_4px_6px_-2px_rgba(0,0,0,0.05)] will-change-transform transform-gpu backface-hidden origin-center transition-all",
+          open ? "duration-200 ease-out opacity-100 scale-100" : "duration-150 ease-in opacity-0 scale-95",
           step === "form" ? "max-h-[90vh] overflow-y-auto" : "h-[484px]"
         )}
       >
@@ -514,6 +523,7 @@ export function PgAgent2() {
   const [confirmModal, setConfirmModal] = useState<null | { turnId: string; extensionDate: Date; originalCheckout: Date; selectedId: string; step: "form" | "sending" | "sent"; payLink: string }>(null)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const invoiceRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const hasChat = turns.length > 0
   const isThinking = turns.some(t => !t.loaded || t.invoiceGenerating)
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }) }, [turns])
@@ -573,6 +583,10 @@ export function PgAgent2() {
 
   const onInvoiceDone = (id: string) => {
     setTurns(m => m.map(t => (t.id === id ? { ...t, invoiceGenerating: false, invoiceLoaded: true } : t)))
+    setTimeout(() => {
+      const el = invoiceRefs.current.get(id)
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
+    }, 100)
   }
 
   const getMinDate = (selectedId: string | null) => {
@@ -654,14 +668,21 @@ export function PgAgent2() {
                             </div>
                           )}
                           {t.invoiceLoaded && t.extensionDate && t.selectedId && CHECKOUT_DATES[t.selectedId] && (
-                            <ExtensionInvoiceCard
-                              extensionDate={t.extensionDate}
-                              originalCheckout={CHECKOUT_DATES[t.selectedId]!}
-                              onCreate={() => openConfirm(t)}
-                              paymentSent={t.paymentSent}
-                              payLink={t.payLink ?? "/pay/7823947234"}
-                              onCopyLink={() => copyInvoiceLink(t.payLink ?? "/pay/7823947234")}
-                            />
+                            <div
+                              ref={el => {
+                                if (el) invoiceRefs.current.set(t.id, el)
+                                else invoiceRefs.current.delete(t.id)
+                              }}
+                            >
+                              <ExtensionInvoiceCard
+                                extensionDate={t.extensionDate}
+                                originalCheckout={CHECKOUT_DATES[t.selectedId]!}
+                                onCreate={() => openConfirm(t)}
+                                paymentSent={t.paymentSent}
+                                payLink={t.payLink ?? "/pay/7823947234"}
+                                onCopyLink={() => copyInvoiceLink(t.payLink ?? "/pay/7823947234")}
+                              />
+                            </div>
                           )}
                         </div>
                       )}

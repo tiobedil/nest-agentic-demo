@@ -38,10 +38,14 @@ export function ExtensionDateField({
 }: ExtensionDateFieldProps) {
   const [open, setOpen] = React.useState(false)
   const [month, setMonth] = React.useState<Date>(() => value ?? minDate ?? new Date())
+  const [pendingDate, setPendingDate] = React.useState<Date | undefined>(value)
   React.useEffect(() => {
     if (value) setMonth(value)
     else if (minDate) setMonth(minDate)
   }, [value, minDate])
+  React.useEffect(() => {
+    if (open) setPendingDate(value)
+  }, [open, value])
 
   const prevDisabled = React.useMemo(() => {
     if (disabled) return true
@@ -105,12 +109,9 @@ export function ExtensionDateField({
             mode="single"
             month={month}
             onMonthChange={setMonth}
-            selected={value}
+            selected={pendingDate}
             disabled={minDate ? { before: minDate } : undefined}
-            onSelect={d => {
-              onChange?.(d)
-              if (d) setOpen(false)
-            }}
+            onSelect={d => setPendingDate(d)}
             components={{ Chevron: DayPickerChevron }}
             classNames={{
               root: "rdp-root w-full",
@@ -162,6 +163,7 @@ export function ExtensionDateField({
             <button
               type="button"
               onClick={() => {
+                setPendingDate(undefined)
                 onChange?.(undefined)
                 setOpen(false)
               }}
@@ -171,10 +173,13 @@ export function ExtensionDateField({
             </button>
             <button
               type="button"
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                onChange?.(pendingDate)
+                setOpen(false)
+              }}
               className="rounded-lg bg-violet-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-violet-700"
             >
-              Done
+              Submit
             </button>
           </div>
         </PopoverContent>
