@@ -258,7 +258,7 @@ function ConfirmationModal({ open, onClose, extensionDate, originalCheckout, sel
                 <X className="size-[24px]" />
               </button>
             </div>
-            <div className="flex flex-col items-center gap-[24px] px-[20px] py-[64px]">
+            <div className="flex flex-1 flex-col items-center justify-center gap-[24px] px-[20px] py-[64px]">
               <CheckCircle2 className="size-[64px] text-[#00c950]" />
               <div className="flex flex-col items-center gap-[8px] text-center max-w-[400px]">
                 <p className="text-[20px] font-semibold leading-[28px] text-[#314158]">Payment Email Sent</p>
@@ -276,7 +276,7 @@ function ConfirmationModal({ open, onClose, extensionDate, originalCheckout, sel
                 </button>
               </div>
             </div>
-            <div className="flex justify-end gap-[8px] px-[20px] pt-[16px]">
+            <div className="flex justify-end gap-[8px] px-[20px] pb-[20px] pt-[16px]">
               <button type="button" onClick={onClose} className="flex h-[40px] items-center justify-center rounded-[8px] border border-[#cad5e2] bg-white px-[14px] text-[16px] font-semibold leading-[24px] text-[#314158] hover:bg-slate-50">Close</button>
             </div>
           </>
