@@ -330,7 +330,7 @@ export function PgAgent2() {
                       {t.streamed && !t.loaded && <SelectableSkeleton />}
                       {t.loaded && (
                         <div className="flex flex-col gap-4">
-                          <div className={cn(t.invoiceLoaded && "pointer-events-none opacity-60")}>
+                          <div className={cn((t.invoiceGenerating || t.invoiceLoaded) && "pointer-events-none opacity-60")}>
                             <FadeScrollRow>
                               {RESERVATIONS.map(r => (
                                 <SelectableReservationCard
@@ -346,31 +346,33 @@ export function PgAgent2() {
                                   property={r.property}
                                   guests={r.guests}
                                   selected={t.selectedId === r.id}
-                                  onSelect={() => !t.invoiceLoaded && selectReservation(t.id, r.id)}
-                                  disabled={t.invoiceLoaded}
-                                  className={cn(t.invoiceLoaded && "opacity-60")}
+                                  onSelect={() => !(t.invoiceGenerating || t.invoiceLoaded) && selectReservation(t.id, r.id)}
+                                  disabled={t.invoiceGenerating || t.invoiceLoaded}
+                                  className={cn((t.invoiceGenerating || t.invoiceLoaded) && "opacity-60")}
                                 />
                               ))}
                             </FadeScrollRow>
                           </div>
-                          <div className={cn(t.invoiceLoaded && "pointer-events-none opacity-60")}>
+                          <div className={cn((t.invoiceGenerating || t.invoiceLoaded) && "pointer-events-none opacity-60")}>
                             <ExtensionDateField
                               value={t.extensionDate ?? undefined}
                               onChange={d => setExtensionDate(t.id, d)}
                               label="New check-out date"
                               placeholder={t.selectedId ? "Select new check-out date" : "Select a reservation first"}
-                              disabled={!t.selectedId || t.invoiceLoaded}
+                              disabled={!t.selectedId || t.invoiceGenerating || t.invoiceLoaded}
                               minDate={getMinDate(t.selectedId)}
                             />
                           </div>
                           {t.extensionDate && (
-                            <Processing
-                              done={t.invoiceLoaded}
-                              onDone={() => onInvoiceDone(t.id)}
-                              title="Generating invoice"
-                              hideSteps
-                              stages={[2000]}
-                            />
+                            <div className="pt-[20px]">
+                              <Processing
+                                done={t.invoiceLoaded}
+                                onDone={() => onInvoiceDone(t.id)}
+                                title="Generating invoice"
+                                hideSteps
+                                stages={[2000]}
+                              />
+                            </div>
                           )}
                           {t.invoiceLoaded && t.extensionDate && t.selectedId && CHECKOUT_DATES[t.selectedId] && (
                             <ExtensionInvoiceCard extensionDate={t.extensionDate} originalCheckout={CHECKOUT_DATES[t.selectedId]!} />

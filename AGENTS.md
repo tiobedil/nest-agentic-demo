@@ -53,3 +53,7 @@ Mock chat reply used by `App.tsx` and reusable for demos:
 - No comments in code unless asked.
 - Match existing file style: functional components, named exports, `import { ... } from "lucide-react"`, Tailwind utilities, no CSS modules.
 - All Paper/figma-derived designs must use these tokens and components — do not invent new fonts, colors, or rebuild the chat panel.
+
+## Cursor
+
+- **MEMORI — Global cursor (2026-09-04)**: Setiap elemen yang bisa di-klik (`button`, `a`, `[role="button"]`, elemen dengan `onClick` / `cursor-pointer`) **harus** menampilkan `cursor: pointer` saat hover. Implementasi global di `src/index.css` (`@layer base { button, a, [role="button"] { cursor: pointer } }`) dan tambahkan `cursor-pointer` pada komponen kustom yang klikable. Aturan ini global dan harus diingat semua agent/session ke depan.
