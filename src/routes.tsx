@@ -13,13 +13,14 @@ export const router = createBrowserRouter([
   {
     element: <RootLayout />,
     children: [
-      { path: "/", element: <App /> },
+      { path: "/", element: <UnifiedDemo /> },
+      { path: "/agent-chat", element: <App /> },
       { path: "/playground", element: <Playground /> },
       { path: "/playground2", element: <Playground2 /> },
       { path: "/pgagent1", element: <PgAgent1 /> },
       { path: "/pgagent2", element: <PgAgent2 /> },
       { path: "/page-test", element: <PageTest /> },
-      { path: "/unified-demo", element: <UnifiedDemo /> },
+      { path: "/unified-demo", element: <Navigate to="/" replace /> },
       { path: "/inspection-planning", element: <OctDemo /> },
       { path: "/oct-demo", element: <Navigate to="/inspection-planning" replace /> },
     ],
