@@ -515,8 +515,12 @@ function ExtensionInvoiceCard({ extensionDate, originalCheckout, onCreate, payme
   )
 }
 
-export function PgAgent2() {
-  const [turns, setTurns] = useState<Turn[]>([])
+function createTurn(user: string): Turn {
+  return { id: Date.now().toString(), user, done: false, streamed: false, loaded: false, selectedId: null, extensionDate: null, invoiceGenerating: false, invoiceLoaded: false, paymentSent: false, payLink: null }
+}
+
+export function PgAgent2({ initialPrompt, embedded = false, onBusyChange }: { initialPrompt?: string; embedded?: boolean; onBusyChange?: (busy: boolean) => void } = {}) {
+  const [turns, setTurns] = useState<Turn[]>(() => initialPrompt ? [createTurn(initialPrompt)] : [])
   const [confirmModal, setConfirmModal] = useState<null | { turnId: string; extensionDate: Date; originalCheckout: Date; selectedId: string; step: "form" | "sending" | "sent"; payLink: string }>(null)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -524,6 +528,7 @@ export function PgAgent2() {
   const hasChat = turns.length > 0
   const isThinking = turns.some(t => !t.loaded || t.invoiceGenerating)
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }) }, [turns])
+  useEffect(() => { onBusyChange?.(isThinking) }, [isThinking, onBusyChange])
 
   const openConfirm = (t: Turn) => {
     if (!t.extensionDate || !t.selectedId) return
@@ -555,7 +560,7 @@ export function PgAgent2() {
   }
 
   const send = (t: string) => {
-    setTurns(m => [...m, { id: Date.now().toString(), user: t, done: false, streamed: false, loaded: false, selectedId: null, extensionDate: null, invoiceGenerating: false, invoiceLoaded: false, paymentSent: false, payLink: null }])
+    setTurns(m => [...m, createTurn(t)])
   }
 
   const onProcessingDone = (id: string) => {
@@ -597,8 +602,8 @@ export function PgAgent2() {
   }
 
   return (
-    <div className="flex h-full flex-col bg-background">
-      <div className="flex-1 overflow-y-auto bg-white">
+    <div className={embedded ? "flex flex-col bg-background" : "flex h-full flex-col bg-background"}>
+      <div className={embedded ? "bg-white" : "flex-1 overflow-y-auto bg-white"}>
         {!hasChat ? (
           <div className="flex h-full items-start justify-center bg-white p-6 pt-[240px]">
             <div className="flex w-full max-w-2xl flex-col items-center gap-8">
@@ -610,7 +615,7 @@ export function PgAgent2() {
             </div>
           </div>
         ) : (
-          <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-8">
+          <div className={cn("mx-auto flex w-full max-w-2xl flex-col gap-8 px-4", !embedded && "py-8")}>
             {turns.map(t => (
               <div key={t.id} className="flex flex-col gap-8">
                 <div className="self-end max-w-[78%] rounded-2xl rounded-br-[6px] bg-violet-100 px-4 py-2.5 text-sm text-violet-950">{t.user}</div>
@@ -618,7 +623,7 @@ export function PgAgent2() {
                   <Processing done={t.done} onDone={() => onProcessingDone(t.id)} title="Finding reservation based on the query" doneTitle="Found for 1 second" hideSteps stages={[1500]} />
                   {t.done && (
                     <div className="flex flex-col gap-[12px]">
-                      <StreamingText text={STREAMING_REPLY} speed={18} onDone={() => onStreamDone(t.id)} />
+                      <StreamingText text={STREAMING_REPLY} speed={embedded ? 100 : 18} autoScroll={!embedded} onDone={() => onStreamDone(t.id)} />
                       {t.streamed && !t.loaded && <SelectableSkeleton />}
                       {t.loaded && (
                         <div className="flex flex-col gap-4">
@@ -696,7 +701,7 @@ export function PgAgent2() {
         )}
       </div>
 
-      {hasChat && (
+      {hasChat && !embedded && (
         <div className="flex shrink-0 justify-center px-4 pb-6">
           <PromptBar onSend={send} isThinking={isThinking} />
         </div>

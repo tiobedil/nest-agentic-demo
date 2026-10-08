@@ -16,14 +16,14 @@ The user's refinements take precedence:
 - Floor timelines display all eight stops without scrolling, with a fixed 16 px gap, no outer line segments, and no arrow. On narrow cards, the label sits above the single-row sequence. All floor markers are neutral except Amar’s constraint marker: yellow at the unchanged 4:30 PM appointment and purple after moving to 5:45 PM.
 - Schedule reordering uses continuous 1200 ms eased movement so multi-slot changes remain readable. Clock slots stay fixed, appointments and their floor markers move together, and completion waits until movement finishes. Native Web Animations preserve the previous position when React reorders keyed elements; reduced motion skips movement.
 - Route completion uses a light-green banner with vertically centered icon and text. The final result has no status pill and uses plain check icons for its six outcome rows.
-- Automatically follow a newly arriving reply while it is generating. Stop following when that reply becomes interactive. Initial card order is Tower C summary, Technician 4 route, then Requires review; focus the Tower C summary after loading. Radio changes and disclosure controls never trigger bottom scrolling.
+- Automatically follow a newly arriving reply while it is generating. Stop following when that reply becomes interactive. Initial card order is Lana Tower summary, Technician 4 route, then Requires review; focus the Lana Tower summary after loading. Radio changes and disclosure controls never trigger bottom scrolling.
 - Use product language in the interface, navigation, page title, and result copy. Keep implementation and fixture limitations documented here rather than in user-facing labels.
 
 ## Scenario coverage
 
 | Document step | Implementation |
 | --- | --- |
-| 1. Bulk instruction | Arbitrary input remains in its user bubble. The assistant streams the fixed Tower C scope and date, runs planning actions, generates UI, then loads the cards. |
+| 1. Bulk instruction | Arbitrary input remains in its user bubble. The assistant streams the fixed Lana Tower scope and date, runs planning actions, generates UI, then loads the cards. |
 | 2. Tentative plan | Tuesday, 13 October; 116 apartments; six technicians; 9:00 AM–6:00 PM; 115 standard appointments; one clickable review action. |
 | 3. Resident checkpoint | Amar Sundaran, Unit 605; all three evidence items; failed-access risk; selectable 4:30 PM and 5:45 PM options; explicit approval. |
 | 4. Original route | The documented eight stops, floor pills, and resident constraint label appear in the planning reply. The subsequent routing reply shows no cards until all five Thinking actions complete, then loads a matching skeleton and starts with the original sequence. |

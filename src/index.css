@@ -309,3 +309,11 @@ body {
 .streaming-cursor {
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }
+
+.unified-demo p:has(> .streaming-cursor) {
+  overflow: clip;
+}
+
+.unified-demo [data-unified-chat-scroll] {
+  overflow-anchor: none;
+}

@@ -27,6 +27,7 @@ const AI_AGENT_ITEMS = [
   { label: "Reservation Extension", to: "/pgagent1" },
   { label: "Extension Requests", to: "/pgagent2" },
   { label: "Inspection Planning", to: "/inspection-planning" },
+  { label: "Unified Demo", to: "/unified-demo" },
 ] as const
 
 function ChevronDown({ open }: { open?: boolean }) {

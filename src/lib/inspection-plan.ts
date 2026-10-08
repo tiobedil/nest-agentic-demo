@@ -21,7 +21,7 @@ const optimisedStops: RouteStop[] = [
 ]
 export const routeFor: Record<RouteState, RouteStop[]> = { original: originalStops, exception: exceptionStops, optimised: optimisedStops }
 
-export const instruction = "Schedule the annual in-unit fire-safety inspections for all apartments in Tower C next Tuesday."
+export const instruction = "Schedule the annual in-unit fire-safety inspections for all apartments in Lana Tower next Tuesday."
 
 export function buildingSchedule(state: RouteState) {
   const routeUnits = new Set(routeFor.original.map(stop => stop.unit))
