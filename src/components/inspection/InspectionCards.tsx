@@ -96,7 +96,7 @@ export function PlanSummary({ approved, adjusted, routesOptimised, onConfirm, di
   return <Card className="gap-0 p-4 shadow-none">
     <div className="flex items-center justify-between gap-2"><h2 className="text-sm font-semibold text-slate-800">{approved ? "Tower C · Inspection plan ready" : "Tower C · Fire-safety inspections"}</h2><span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">Tentative</span></div>
     <p className="mt-3 text-xs text-slate-700">116 apartments · 6 technicians · {approved ? `${adjusted ? 1 : 0} resident adjustment` : "1 requires review"}</p>
-    {approved && routesOptimised && <p className="mt-3 flex items-center gap-2 text-xs text-slate-700"><CheckCircle2 className="size-3.5 shrink-0 text-emerald-700" />All routes optimised{adjusted && " · Amar's 5:45 PM slot preserved"}</p>}
+    {approved && routesOptimised && <p className="mt-3 flex flex-nowrap items-center gap-2 text-xs leading-4 text-slate-700"><CheckCircle2 aria-hidden="true" className="block size-3.5 shrink-0 text-emerald-700" /><span className="translate-y-px whitespace-nowrap">All routes optimised{adjusted && " · Amar's 5:45 PM slot preserved"}</span></p>}
     {approved && <><p className="mt-3 text-[11px] text-slate-500">No resident notifications sent yet.</p><InspectionAction disabled={disabled} onClick={onConfirm} className="mt-3 text-sm">Confirm &amp; notify residents<ArrowRight aria-hidden="true" className="size-4" /></InspectionAction></>}
   </Card>
 }
