@@ -20,7 +20,7 @@ function FlowEntry({ entry, panelContainer, active, onBusyChange, onPanelOpenCha
   if (entry.flow === "inspection") return <OctDemo embedded initialPrompt={entry.prompt} onBusyChange={reportBusy} onPanelOpenChange={reportPanel} panelContainer={panelContainer} showPanel={active} scheduleId={`building-schedule-${entry.id}`} />
   return <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 text-sm">
     <div className="max-w-[78%] self-end rounded-2xl rounded-br-[6px] bg-violet-100 px-4 py-2.5 text-violet-950">{entry.prompt}</div>
-    <p className="leading-6 text-slate-700">Include “extension” to manage an extension request, or “inspection” to plan inspections.</p>
+    <p className="leading-6 text-slate-700">Hello there! How can I help you today?</p>
   </div>
 }
 
@@ -83,7 +83,6 @@ export function UnifiedDemo() {
               <p className="text-sm leading-6 text-muted-foreground">Manage extension requests or plan inspections, all in one conversation.</p>
             </div>
             <PromptBar onSend={send} isThinking={isThinking} placeholder="Ask about an extension or inspection..." />
-            <p className="text-center text-xs leading-5 text-slate-500">Include “extension” or “inspection” in your message to get started.</p>
           </div>
         </div> : <div className="flex flex-col gap-8 py-8" role="log" aria-label="Unified Demo conversation">
           <h1 className="sr-only">Unified Demo</h1>
