@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import type { ComponentProps, ReactNode } from "react"
 import { ArrowRight, Check, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -19,6 +19,7 @@ export function LoadingSurface({ children, label }: { children: ReactNode; label
 
 export function RouteCard({ state, live }: { state: RouteState; live: boolean }) {
   const stops = routeFor[state]
+  const [amarArrived, setAmarArrived] = useState(state !== "original")
   const cardRef = useRef<HTMLDivElement>(null)
   const positions = useRef(new Map<string, string>())
   const animations = useRef(new Map<string, Animation>())
@@ -30,6 +31,8 @@ export function RouteCard({ state, live }: { state: RouteState; live: boolean })
     const duration = parseCssDuration(style.getPropertyValue("--inspection-route-duration"))
     const easing = style.getPropertyValue("--ease-in-out").trim()
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    let cancelled = false
+    if (state === "original") setAmarArrived(false)
     for (const element of card.querySelectorAll<HTMLElement>("[data-route-position]")) {
       const key = element.dataset.routePosition!
       const target = element.style.transform
@@ -39,11 +42,19 @@ export function RouteCard({ state, live }: { state: RouteState; live: boolean })
       if (previous && previous !== target && duration > 0 && easing && !reducedMotion) {
         const animation = element.animate([{ transform: previous }, { transform: target }], { duration, easing })
         animations.current.set(key, animation)
+        if (key === "visit-605" && state !== "original") {
+          setAmarArrived(false)
+          animation.onfinish = () => {
+            if (!cancelled) setAmarArrived(true)
+          }
+        }
       } else {
         animations.current.delete(key)
+        if (key === "visit-605" && state !== "original") setAmarArrived(true)
       }
       positions.current.set(key, target)
     }
+    return () => { cancelled = true }
   }, [state])
 
   useEffect(() => {
@@ -51,7 +62,7 @@ export function RouteCard({ state, live }: { state: RouteState; live: boolean })
     return () => { for (const animation of current.values()) animation.cancel() }
   }, [])
 
-  const constraint = state === "original"
+  const constraint = !amarArrived
     ? { row: "bg-amber-50", label: "text-amber-800", pill: "bg-amber-100 text-amber-900" }
     : { row: "bg-violet-100 ring-1 ring-inset ring-violet-500", label: "text-violet-800", pill: "bg-violet-600 text-white" }
   return <Card ref={cardRef} className="@container h-fit shrink-0 gap-0 p-4 shadow-none">
