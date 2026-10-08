@@ -4,6 +4,7 @@ import { CheckCircle2 } from "lucide-react"
 import { PromptBar } from "@/components/chat/PromptBar"
 import { StreamingText } from "@/components/chat/StreamingText"
 import { Thinking } from "@/components/chat/Thinking"
+import { Processing } from "@/components/chat/Processing"
 import { FullSchedule, InspectionAction, LoadingSurface, OperationSuccess, PlanSummary, ResidentCard, RouteCard } from "@/components/inspection/InspectionCards"
 import type { RouteState } from "@/lib/inspection-plan"
 
@@ -21,7 +22,8 @@ const reviewSteps = ["Checking plan readiness"]
 const openingText = "I’ll schedule the annual in-unit fire-safety inspections for all 116 apartments in Lana Tower on Tuesday, 13 October, and check resident access history before confirming the plan."
 const routeCompletionText = "Route optimised. Amar's appointment preserved."
 
-function AssistantReply({ message, active, confirmed, onReady, onDecision, onReview, onPanelChange }: {
+function AssistantReply({ message, active, confirmed, thinkBeforeReply = false, onReady, onDecision, onReview, onPanelChange }: {
+  thinkBeforeReply?: boolean
   confirmed: boolean
   onPanelChange: (id: number, update: Partial<PanelState>) => void
   message: AssistantMessage
@@ -32,6 +34,8 @@ function AssistantReply({ message, active, confirmed, onReady, onDecision, onRev
 }) {
   const { id, phase, adjusted } = message
   const [mode, setMode] = useState<Mode>("intro")
+  const [thought, setThought] = useState(!thinkBeforeReply)
+  const finishThinking = useCallback(() => setThought(true), [])
   const [traceProgress, setTraceProgress] = useState(0)
   const [residentDecision, setResidentDecision] = useState<boolean | null>(null)
   const steps = phase === "planning" ? planSteps : phase === "routing" ? optimiseSteps : phase === "review" ? reviewSteps : executeSteps
@@ -96,7 +100,8 @@ function AssistantReply({ message, active, confirmed, onReady, onDecision, onRev
   const showTrace = mode !== "intro"
 
   return <div data-assistant-message={id} data-phase={phase} data-mode={mode} className="flex flex-col gap-4">
-    <StreamingText text={intro} speed={100} onDone={introDone} autoScroll={false} />
+    {thinkBeforeReply && <Processing done={thought} onDone={finishThinking} title="Thinking" doneTitle="Thought for 1 second" hideSteps stages={[1500]} />}
+    {thought && <StreamingText text={intro} speed={100} onDone={introDone} autoScroll={false} />}
     {showTrace && <Thinking title={traceTitle} steps={steps} completed={traceProgress} done={traceProgress === steps.length && mode !== "processing"}  />}
     {phase === "planning" && loading && <LoadingSurface label="Loading Lana Tower inspection summary">{planningSummary}</LoadingSurface>}
     {phase === "planning" && showPlanningSummary && planningSummary}
@@ -216,7 +221,7 @@ export function OctDemo({ initialPrompt, embedded = false, onBusyChange, onPanel
         {!embedded && <h1 className="sr-only">Inspection planning conversation</h1>}
         {messages.map(message => message.role === "user"
           ? <div key={message.id} className="max-w-[78%] self-end rounded-2xl rounded-br-[6px] bg-violet-100 px-4 py-2.5 text-sm text-violet-950">{message.text}</div>
-          : <AssistantReply key={message.id} message={message} confirmed={panel?.confirmed ?? false} active={activeId === message.id} onReady={onReady} onDecision={onDecision} onReview={onReview} onPanelChange={onPanelChange} />)}
+          : <AssistantReply key={message.id} message={message} thinkBeforeReply={embedded} confirmed={panel?.confirmed ?? false} active={activeId === message.id} onReady={onReady} onDecision={onDecision} onReview={onReview} onPanelChange={onPanelChange} />)}
       </div>}
     </div>
     {messages.length > 0 && !embedded && <div className="flex shrink-0 justify-center px-4 pb-6"><PromptBar onSend={send} isThinking={isThinking} /></div>}

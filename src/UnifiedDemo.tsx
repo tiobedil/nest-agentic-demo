@@ -1,5 +1,7 @@
 import { useCallback, useLayoutEffect, useRef, useState } from "react"
 import { PromptBar } from "@/components/chat/PromptBar"
+import { Processing } from "@/components/chat/Processing"
+import { StreamingText } from "@/components/chat/StreamingText"
 import { OctDemo } from "@/OctDemo"
 import { PgAgent2 } from "@/PgAgent2"
 import { detectUnifiedFlow } from "@/lib/unified-flow"
@@ -16,11 +18,17 @@ function FlowEntry({ entry, panelContainer, active, onBusyChange, onPanelOpenCha
 }) {
   const reportBusy = useCallback((busy: boolean) => onBusyChange(entry.id, busy), [entry.id, onBusyChange])
   const reportPanel = useCallback((open: boolean) => onPanelOpenChange(entry.id, open), [entry.id, onPanelOpenChange])
+  const [thought, setThought] = useState(false)
+  const finishThinking = useCallback(() => setThought(true), [])
+  const finishReply = useCallback(() => reportBusy(false), [reportBusy])
   if (entry.flow === "extension") return <PgAgent2 embedded initialPrompt={entry.prompt} onBusyChange={reportBusy} />
   if (entry.flow === "inspection") return <OctDemo embedded initialPrompt={entry.prompt} onBusyChange={reportBusy} onPanelOpenChange={reportPanel} panelContainer={panelContainer} showPanel={active} scheduleId={`building-schedule-${entry.id}`} />
   return <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 text-sm">
     <div className="max-w-[78%] self-end rounded-2xl rounded-br-[6px] bg-violet-100 px-4 py-2.5 text-violet-950">{entry.prompt}</div>
-    <p className="leading-6 text-slate-700">Hello there! How can I help you today?</p>
+    <div className="flex flex-col gap-3">
+      <Processing done={thought} onDone={finishThinking} title="Thinking" doneTitle="Thought for 1 second" hideSteps stages={[1500]} />
+      {thought && <StreamingText text="Hello there! How can I help you today?" speed={100} autoScroll={false} onDone={finishReply} />}
+    </div>
   </div>
 }
 
@@ -46,7 +54,7 @@ export function UnifiedDemo() {
     const entry = { id: ++nextId.current, prompt: prompt.trim(), flow: detectUnifiedFlow(prompt) }
     setEntries(current => [...current, entry])
     setActiveId(entry.id)
-    if (entry.flow) reportBusy(entry.id, true)
+    reportBusy(entry.id, true)
   }
 
   useLayoutEffect(() => {
