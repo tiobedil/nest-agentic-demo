@@ -13,9 +13,9 @@ type Message = AssistantMessage | { id: number; role: "user"; text: string }
 type PanelState = { state: RouteState; loading: boolean; reviewable: boolean; confirmed: boolean }
 type Decision = "recommended" | "standard" | "confirm"
 
-const planSteps = ["Checking inspection scope…", "Assigning technicians…", "Building tentative schedules…", "Checking resident access history…", "Generating UI"]
-const optimiseSteps = ["Locking Amar’s 5:45 PM access window…", "Checking remaining resident constraints…", "Regrouping inspections by floor…", "Optimising technician route…"]
-const executeSteps = ["Publishing technician schedules…", "Confirming appointment windows…", "Applying resident access requirements…", "Updating building operations…", "Sending resident notifications…"]
+const planSteps = ["Checking inspection scope", "Assigning technicians", "Building tentative schedules", "Checking resident access history", "Generating UI"]
+const optimiseSteps = ["Locking Amar’s 5:45 PM access window", "Checking remaining resident constraints", "Regrouping inspections by floor", "Optimising technician route"]
+const executeSteps = ["Publishing technician schedules", "Confirming appointment windows", "Applying resident access requirements", "Updating building operations", "Sending resident notifications"]
 const reviewSteps = ["Generating UI"]
 const openingText = "I’ll schedule the annual in-unit fire-safety inspections for all 116 apartments in Tower C on Tuesday, 13 October, and check resident access history before confirming the plan."
 const routeCompletionText = "Amar’s 5:45 PM access window is preserved, while the remaining inspections have been regrouped into continuous floor blocks."
@@ -32,7 +32,6 @@ function AssistantReply({ message, active, onReady, onDecision, onReview, onPane
   const [mode, setMode] = useState<Mode>("intro")
   const [traceProgress, setTraceProgress] = useState(0)
   const residentRef = useRef<HTMLDivElement>(null)
-  const summaryRef = useRef<HTMLDivElement>(null)
   const steps = phase === "planning" ? planSteps : phase === "routing" ? optimiseSteps : phase === "review" ? reviewSteps : executeSteps
   const loading = mode === "loading" && traceProgress === steps.length
   const disabled = !active || mode !== "ready"
@@ -80,18 +79,14 @@ function AssistantReply({ message, active, onReady, onDecision, onReview, onPane
   useLayoutEffect(() => {
     if (!active || mode !== "ready") return
     onReady(id)
-    if (phase === "planning") {
-      summaryRef.current?.scrollIntoView({ block: "start", behavior: "auto" })
-      summaryRef.current?.focus({ preventScroll: true })
-    }
-  }, [active, mode, id, onReady, phase])
+  }, [active, mode, id, onReady])
 
   const reviewResident = () => {
     if (disabled) return
     residentRef.current?.scrollIntoView({ block: "center" })
     residentRef.current?.focus({ preventScroll: true })
   }
-  const planningSummary = <div data-plan-summary ref={mode === "ready" ? summaryRef : undefined} tabIndex={mode === "ready" && active ? -1 : undefined} className="inspection-card-enter rounded-lg focus-visible:outline-2 focus-visible:outline-violet-600">
+  const planningSummary = <div data-plan-summary className="inspection-card-enter rounded-lg">
     <PlanSummary approved={false} adjusted={false} routesOptimised={false} onReview={reviewResident} disabled={disabled} />
   </div>
   const planningResident = <div data-resident-review ref={mode === "ready" ? residentRef : undefined} tabIndex={mode === "ready" && active ? -1 : undefined} className="inspection-card-enter rounded-lg focus-visible:outline-2 focus-visible:outline-violet-600">
@@ -163,7 +158,13 @@ export function OctDemo() {
   useLayoutEffect(() => {
     const viewport = scrollRef.current
     const incoming = viewport?.querySelector<HTMLElement>(`[data-assistant-message="${activeId}"]`)
-    if (!viewport || !incoming || !isThinking) return
+    if (!viewport || !incoming) return
+    if (!isThinking) {
+      const frame = window.requestAnimationFrame(() => {
+        viewport.scrollTo({ top: viewport.scrollHeight, behavior: "auto" })
+      })
+      return () => window.cancelAnimationFrame(frame)
+    }
     let frame: number | null = null
     const followIncoming = () => {
       if (frame !== null) return
@@ -176,7 +177,7 @@ export function OctDemo() {
     const changes = new MutationObserver(followIncoming)
     resize.observe(incoming)
     resize.observe(viewport)
-    changes.observe(incoming, { childList: true, subtree: true, characterData: true })
+    changes.observe(incoming, { childList: true, subtree: true, characterData: true, attributes: true })
     viewport.scrollTo({ top: viewport.scrollHeight, behavior: "auto" })
     return () => {
       resize.disconnect()
