@@ -4,6 +4,7 @@ import { ArrowRight, Check, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { buildingSchedule, routeFor } from "@/lib/inspection-plan"
+import { parseCssDuration } from "@/lib/inspection-motion"
 import type { RouteState } from "@/lib/inspection-plan"
 
 export function InspectionAction({ className = "", variant = "default", ...props }: ComponentProps<typeof Button>) {
@@ -26,7 +27,7 @@ export function RouteCard({ state, live }: { state: RouteState; live: boolean })
     const card = cardRef.current
     if (!card) return
     const style = getComputedStyle(card)
-    const duration = Number.parseFloat(style.getPropertyValue("--inspection-route-duration"))
+    const duration = parseCssDuration(style.getPropertyValue("--inspection-route-duration"))
     const easing = style.getPropertyValue("--ease-in-out").trim()
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
     for (const element of card.querySelectorAll<HTMLElement>("[data-route-position]")) {
@@ -68,16 +69,6 @@ export function RouteCard({ state, live }: { state: RouteState; live: boolean })
         <div className="min-w-0"><p className="text-sm font-semibold text-slate-700">Unit {stop.unit}{stop.amar && " · Amar"}</p>{stop.amar && <p className={`mt-1 text-[11px] leading-4 ${constraint.label}`}>{state === "original" ? "Resident constraint" : "Pinned · Resident constraint"}</p>}</div>
         <span className={`justify-self-end rounded-full px-2 py-1 text-[11px] font-medium ${stop.amar ? constraint.pill : "bg-slate-100 text-slate-700"}`}>Floor {stop.floor}</span>
       </div>)}
-    </div>
-    <div data-floor-sequence className="mt-3 flex min-w-0 flex-col items-start gap-3 border-t border-slate-100 pt-3 @min-[360px]:flex-row @min-[360px]:items-center">
-      <span className="shrink-0 whitespace-nowrap text-[11px] leading-5 text-slate-600">Floor sequence</span>
-      <div role="group" aria-label="Floor sequence timeline" className="rounded pb-1">
-        <ol aria-label="Floors in visit order" style={{ width: `${stops.length * 32 - 16}px` }} className="relative flex h-4 shrink-0 items-center gap-[16px] before:absolute before:inset-x-2 before:top-1/2 before:h-px before:bg-slate-200">
-          {stops.map((stop, index) => <li key={stop.unit} data-route-position={`floor-${stop.unit}`} data-floor={stop.floor} aria-label={`Stop ${index + 1}: Unit ${stop.unit}, Floor ${stop.floor}`} className="oct-floor-stop absolute left-0 top-0 flex size-4 justify-center" style={{ transform: `translate3d(${index * 200}%, 0, 0)` }}>
-            <span data-resident-marker={stop.amar ? true : undefined} className={`flex size-4 items-center justify-center rounded-full text-[11px] font-semibold ${stop.amar ? constraint.pill : "bg-slate-100 text-slate-700"}`}>{stop.floor}</span>
-          </li>)}
-        </ol>
-      </div>
     </div>
   </Card>
 }

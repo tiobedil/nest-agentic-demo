@@ -237,6 +237,8 @@ body {
   }}
 .oct-demo {
   --inspection-route-duration: 1200ms;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 }
 
@@ -278,4 +280,23 @@ body {
 
 .oct-demo [data-chat-scroll] {
   overflow-anchor: none;
+}
+
+@keyframes inspection-card-enter {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes inspection-panel-enter {
+  from { opacity: 0; transform: translate3d(100%, 0, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .oct-demo .inspection-card-enter {
+    animation: inspection-card-enter 250ms var(--ease-out) both;
+  }
+  .oct-demo .inspection-panel-enter {
+    animation: inspection-panel-enter 500ms var(--ease-drawer) both;
+  }
 }
