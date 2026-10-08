@@ -23,10 +23,10 @@ const NAV_ITEMS: NavItem[] = [
 ]
 
 const AI_AGENT_ITEMS = [
-  { label: "Agent chat demo", to: "/" },
-  { label: "Extension demo 1", to: "/pgagent1" },
-  { label: "Extension demo 2", to: "/pgagent2" },
-  { label: "Oct Demo", to: "/oct-demo" },
+  { label: "Agent Chat", to: "/" },
+  { label: "Reservation Extension", to: "/pgagent1" },
+  { label: "Extension Requests", to: "/pgagent2" },
+  { label: "Inspection Planning", to: "/inspection-planning" },
 ] as const
 
 function ChevronDown({ open }: { open?: boolean }) {

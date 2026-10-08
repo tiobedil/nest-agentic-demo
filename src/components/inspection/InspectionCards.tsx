@@ -1,6 +1,6 @@
 import { useId, useState } from "react"
 import type { ComponentProps, ReactNode } from "react"
-import { ArrowRight, CheckCircle2 } from "lucide-react"
+import { ArrowRight, Check, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { buildingSchedule, routeFor } from "@/lib/inspection-plan"
@@ -23,15 +23,24 @@ export function RouteCard({ state, live }: { state: RouteState; live: boolean })
       <div><p className="text-xs text-slate-500">Technician 4 · Afternoon visits</p><h2 className="mt-1 text-base font-semibold text-slate-800">{state === "original" ? "Tentative route" : state === "exception" ? "Updated tentative route" : "Optimised route"}</h2></div>
       <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">{live ? "Confirmed" : "Tentative"}</span>
     </div>
-    <div className="grid grid-cols-[4.5rem_minmax(0,1fr)_4rem] gap-2 px-2 text-xs text-slate-500" aria-hidden="true"><span>Time</span><span>Apartment</span><span className="text-right">Floor</span></div>
+    <div className="grid grid-cols-[4rem_minmax(0,1fr)_3rem] sm:grid-cols-[4.5rem_minmax(0,1fr)_4rem] gap-2 px-2 text-xs text-slate-500" aria-hidden="true"><span>Time</span><span>Apartment</span><span className="text-right">Floor</span></div>
     <div role="list" aria-label="Technician 4 afternoon route" className="relative mt-2 h-[32rem]">
-      {stops.map((stop, index) => <div key={stop.unit} role="listitem" data-unit={stop.unit} data-time={stop.time} className={`oct-route-row absolute inset-x-0 top-0 grid h-16 grid-cols-[4.5rem_minmax(0,1fr)_4rem] items-center gap-2 rounded-lg px-2 ${stop.amar ? "z-10 bg-violet-50" : "bg-white"}`} style={{ transform: `translateY(${index * 100}%)` }}>
+      {stops.map((stop, index) => <div key={stop.unit} role="listitem" data-unit={stop.unit} data-time={stop.time} className={`oct-route-row absolute inset-x-0 top-0 grid h-16 grid-cols-[4rem_minmax(0,1fr)_3rem] sm:grid-cols-[4.5rem_minmax(0,1fr)_4rem] items-center gap-2 rounded-lg px-2 ${stop.amar ? "z-10 bg-violet-50" : "bg-white"}`} style={{ transform: `translateY(${index * 100}%)` }}>
         <span className="text-xs tabular-nums text-slate-600">{stop.time}</span>
         <div className="min-w-0"><p className="text-sm font-semibold text-slate-700">Unit {stop.unit}{stop.amar && " · Amar"}</p>{stop.amar && <p className="mt-1 text-[11px] leading-4 text-violet-700">{state === "original" ? "Resident constraint" : "Pinned · Resident constraint"}</p>}</div>
-        <span className={`justify-self-end rounded-full px-2 py-1 text-[11px] font-medium ${stop.floor === 2 ? "bg-slate-100 text-slate-700" : "bg-violet-100 text-violet-800"}`}>Floor {stop.floor}</span>
+        <span className={`justify-self-end rounded-full px-2 py-1 text-[11px] font-medium ${stop.amar ? "bg-violet-100 text-violet-800" : "bg-slate-100 text-slate-700"}`}>Floor {stop.floor}</span>
       </div>)}
     </div>
-    <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 text-xs text-slate-600"><span>Floor sequence</span><span className="font-semibold tracking-wide">{stops.map(stop => stop.floor).join(" · ")}</span></div>
+    <div data-floor-sequence className="mt-3 flex min-w-0 items-center gap-3 border-t border-slate-100 pt-3">
+      <span className="shrink-0 whitespace-nowrap text-[11px] leading-5 text-slate-600">Floor sequence</span>
+      <div role="group" aria-label="Floor sequence timeline" tabIndex={0} className="min-w-0 overflow-x-auto rounded pb-1 [scrollbar-width:thin] focus-visible:outline-2 focus-visible:outline-violet-600">
+        <ol aria-label="Floors in visit order" className="relative flex w-max items-center gap-[16px] before:absolute before:inset-x-2 before:top-1/2 before:h-px before:bg-slate-200">
+          {stops.map((stop, index) => <li key={stop.unit} data-floor={stop.floor} aria-label={`Stop ${index + 1}: Unit ${stop.unit}, Floor ${stop.floor}`} className="relative flex justify-center">
+            <span className={`flex size-4 items-center justify-center rounded-full text-[11px] font-semibold ${stop.amar ? "bg-violet-100 text-violet-800" : "bg-slate-100 text-slate-700"}`}>{stop.floor}</span>
+          </li>)}
+        </ol>
+      </div>
+    </div>
   </Card>
 }
 
@@ -65,7 +74,7 @@ export function ResidentCard({ onApply, onKeep, disabled = false }: { onApply: (
 }
 
 export function FullSchedule({ state, scheduleId, disabled = false }: { state: RouteState; scheduleId: string; disabled?: boolean }) {
-  return <Card id={scheduleId} className="gap-3 p-4 shadow-none"><h2 className="text-base font-semibold text-slate-800">Full Tower C schedule · 116 apartments</h2><p className="text-xs leading-5 text-slate-600">Demo data: Technician 4’s eight afternoon visits follow the supplied scenario. The other 108 appointments are illustrative, not connected to live building records. All visits require resident-present access where requested.</p>{buildingSchedule(state).map(route => <details key={route.technician} className="rounded-lg bg-slate-50 p-3"><summary aria-disabled={disabled} tabIndex={disabled ? -1 : 0} onClick={event => { if (disabled) event.preventDefault() }} onKeyDown={event => { if (disabled && (event.key === "Enter" || event.key === " ")) event.preventDefault() }} className={`rounded text-sm font-medium text-slate-700 focus-visible:outline-2 focus-visible:outline-violet-600 ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>Technician {route.technician} · {route.stops.length} apartments</summary><table className="mt-3 w-full text-left text-xs text-slate-700"><caption className="sr-only">Technician {route.technician} appointments on Tuesday, 13 October</caption><thead><tr><th scope="col" className="pb-2">Time</th><th scope="col" className="pb-2">Apartment</th><th scope="col" className="pb-2">Floor</th></tr></thead><tbody>{route.stops.map(stop => <tr key={stop.unit}><td className="py-2 tabular-nums">{stop.time}</td><td>Unit {stop.unit}{stop.unit === "605" && " · Amar"}</td><td>{stop.floor}</td></tr>)}</tbody></table></details>)}</Card>
+  return <Card id={scheduleId} className="gap-3 p-4 shadow-none"><h2 className="text-base font-semibold text-slate-800">Full Tower C schedule · 116 apartments</h2><p className="text-xs leading-5 text-slate-600">Appointment windows and resident access requirements are included for all 116 apartments.</p>{buildingSchedule(state).map(route => <details key={route.technician} className="rounded-lg bg-slate-50 p-3"><summary aria-disabled={disabled} tabIndex={disabled ? -1 : 0} onClick={event => { if (disabled) event.preventDefault() }} onKeyDown={event => { if (disabled && (event.key === "Enter" || event.key === " ")) event.preventDefault() }} className={`rounded text-sm font-medium text-slate-700 focus-visible:outline-2 focus-visible:outline-violet-600 ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>Technician {route.technician} · {route.stops.length} apartments</summary><table className="mt-3 w-full text-left text-xs text-slate-700"><caption className="sr-only">Technician {route.technician} appointments on Tuesday, 13 October</caption><thead><tr><th scope="col" className="pb-2">Time</th><th scope="col" className="pb-2">Apartment</th><th scope="col" className="pb-2">Floor</th></tr></thead><tbody>{route.stops.map(stop => <tr key={stop.unit}><td className="py-2 tabular-nums">{stop.time}</td><td>Unit {stop.unit}{stop.unit === "605" && " · Amar"}</td><td>{stop.floor}</td></tr>)}</tbody></table></details>)}</Card>
 }
 
 
@@ -80,14 +89,13 @@ export function ResidentAdjustment({ adjusted }: { adjusted: boolean }) {
 export function OperationSuccess({ adjusted }: { adjusted: boolean }) {
   return <Card className="gap-0 p-5 shadow-none">
     <CheckCircle2 aria-hidden="true" className="size-8 text-emerald-700" />
-    <span className="mt-4 w-fit rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800">Live · Demo</span>
     <h2 className="mt-3 text-xl font-semibold text-slate-800">Inspection plan live</h2>
     <p className="mt-2 text-sm font-semibold text-slate-700">116 / 116 apartments scheduled</p>
     <div className="mt-5 space-y-3">{[
       "6 technician routes confirmed", adjusted ? "Amar’s 5:45 PM access requirement accommodated" : "Amar’s 4:30 PM standard slot retained by operator", "Resident appointment windows confirmed", "Building operations updated", "Notifications sent", "No unresolved scheduling conflicts",
-    ].map(item => <p key={item} className="flex items-start gap-2 text-sm leading-6 text-slate-700"><CheckCircle2 aria-hidden="true" className="mt-1 size-4 shrink-0 text-emerald-700" />{item}</p>)}</div>
+    ].map(item => <p key={item} className="flex items-start gap-2 text-sm leading-6 text-slate-700"><Check aria-hidden="true" className="mt-1 size-4 shrink-0 text-emerald-700" />{item}</p>)}</div>
     {!adjusted && <p className="mt-4 rounded-lg bg-amber-50 p-3 text-xs leading-5 text-amber-900">Amar’s higher failed-access risk remains. Resident-present access is required.</p>}
     <p className="mt-5 rounded-lg bg-slate-50 p-3 text-sm text-slate-600">First inspection: Tuesday, 13 October · 9:00 AM</p>
-    <p className="mt-3 text-xs leading-5 text-slate-500">Demo complete. No real schedules were published or notifications sent. No further action is required.</p>
+    <p className="mt-3 text-xs leading-5 text-slate-500">No further action is required.</p>
   </Card>
 }

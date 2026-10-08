@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom"
+import { createBrowserRouter, Navigate } from "react-router-dom"
 import App from "./App"
 import { Playground } from "./Playground"
 import { Playground2 } from "./Playground2"
@@ -18,7 +18,8 @@ export const router = createBrowserRouter([
       { path: "/pgagent1", element: <PgAgent1 /> },
       { path: "/pgagent2", element: <PgAgent2 /> },
       { path: "/page-test", element: <PageTest /> },
-      { path: "/oct-demo", element: <OctDemo /> },
+      { path: "/inspection-planning", element: <OctDemo /> },
+      { path: "/oct-demo", element: <Navigate to="/inspection-planning" replace /> },
     ],
   },
 ])

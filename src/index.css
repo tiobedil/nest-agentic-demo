@@ -269,3 +269,7 @@ body {
 .oct-skeleton :is(svg, input) {
   visibility: hidden;
 }
+
+.oct-demo [data-chat-scroll] {
+  overflow-anchor: none;
+}
