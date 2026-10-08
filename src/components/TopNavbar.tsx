@@ -26,6 +26,7 @@ const AI_AGENT_ITEMS = [
   { label: "Agent chat demo", to: "/" },
   { label: "Extension demo 1", to: "/pgagent1" },
   { label: "Extension demo 2", to: "/pgagent2" },
+  { label: "Oct Demo", to: "/oct-demo" },
 ] as const
 
 function ChevronDown({ open }: { open?: boolean }) {

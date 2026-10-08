@@ -6,6 +6,7 @@ import { PgAgent1 } from "./PgAgent1"
 import { PgAgent2 } from "./PgAgent2"
 import { PageTest } from "./PageTest"
 import { RootLayout } from "./RootLayout"
+import { OctDemo } from "./OctDemo"
 
 export const router = createBrowserRouter([
   {
@@ -17,6 +18,7 @@ export const router = createBrowserRouter([
       { path: "/pgagent1", element: <PgAgent1 /> },
       { path: "/pgagent2", element: <PgAgent2 /> },
       { path: "/page-test", element: <PageTest /> },
+      { path: "/oct-demo", element: <OctDemo /> },
     ],
   },
 ])
