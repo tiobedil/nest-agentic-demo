@@ -7,7 +7,7 @@ import { FullSchedule, InspectionAction, LoadingSurface, OperationSuccess, PlanS
 import type { RouteState } from "@/lib/inspection-plan"
 
 type Phase = "planning" | "routing" | "review" | "execution"
-type Mode = "intro" | "processing" | "loading" | "ready" | "route-original" | "route-applied" | "route-settling" | "route-optimised" | "route-done"
+type Mode = "intro" | "processing" | "loading" | "plan-summary" | "plan-resident" | "plan-panel" | "ready" | "route-original" | "route-applied" | "route-settling" | "route-optimised" | "route-done"
 type AssistantMessage = { id: number; role: "assistant"; phase: Phase; adjusted: boolean }
 type Message = AssistantMessage | { id: number; role: "user"; text: string }
 type PanelState = { state: RouteState; loading: boolean; reviewable: boolean; confirmed: boolean }
@@ -55,12 +55,15 @@ function AssistantReply({ message, active, onReady, onDecision, onReview, onPane
 
   useEffect(() => {
     if (!active) return
-    const delay = mode === "route-original" ? 850 : mode === "route-applied" ? 1800 : mode === "route-settling" ? 1400 : mode === "loading" ? 700 : mode === "route-done" ? 1600 : null
+    const delay = mode === "route-original" ? 850 : mode === "route-applied" ? 1800 : mode === "route-settling" ? 1400 : mode === "loading" ? 700 : mode === "plan-summary" ? 850 : mode === "plan-resident" ? 850 : mode === "plan-panel" ? 500 : mode === "route-done" ? 1600 : null
     if (delay === null) return
     const timer = window.setTimeout(() => {
       if (mode === "route-original") { onPanelChange(id, { state: "exception" }); setMode("route-applied") }
       if (mode === "route-applied") { onPanelChange(id, { state: "optimised" }); setMode("route-settling") }
-      if (mode === "loading") setMode(phase === "routing" ? "route-original" : "ready")
+      if (mode === "loading") setMode(phase === "planning" ? "plan-summary" : phase === "routing" ? "route-original" : "ready")
+      if (mode === "plan-summary") setMode("plan-resident")
+      if (mode === "plan-resident") setMode("plan-panel")
+      if (mode === "plan-panel") setMode("ready")
       if (mode === "route-settling") setMode("route-optimised")
       if (mode === "route-done") onReview(id)
     }, delay)
@@ -69,7 +72,7 @@ function AssistantReply({ message, active, onReady, onDecision, onReview, onPane
 
   useLayoutEffect(() => {
     if (!active) return
-    if (phase === "planning" && (loading || mode === "ready")) onPanelChange(id, { state: "original", loading, reviewable: false, confirmed: false })
+    if (phase === "planning" && mode === "plan-panel") onPanelChange(id, { state: "original", loading: false, reviewable: false, confirmed: false })
     if (phase === "review" && mode === "ready") onPanelChange(id, { reviewable: true })
     if (phase === "execution" && mode === "ready") onPanelChange(id, { confirmed: true })
   }, [active, phase, loading, mode, id, onPanelChange])
@@ -88,14 +91,14 @@ function AssistantReply({ message, active, onReady, onDecision, onReview, onPane
     residentRef.current?.scrollIntoView({ block: "center" })
     residentRef.current?.focus({ preventScroll: true })
   }
-  const planningCards = <>
-    <div data-plan-summary ref={mode === "ready" ? summaryRef : undefined} tabIndex={mode === "ready" && active ? -1 : undefined} className="rounded-lg focus-visible:outline-2 focus-visible:outline-violet-600">
-      <PlanSummary approved={false} adjusted={false} routesOptimised={false} onReview={reviewResident} disabled={disabled} />
-    </div>
-    <div data-resident-review ref={mode === "ready" ? residentRef : undefined} tabIndex={mode === "ready" && active ? -1 : undefined} className="rounded-lg focus-visible:outline-2 focus-visible:outline-violet-600">
-      <ResidentCard disabled={disabled} onApply={() => onDecision(id, "recommended", true)} onKeep={() => onDecision(id, "standard", false)} />
-    </div>
-  </>
+  const planningSummary = <div data-plan-summary ref={mode === "ready" ? summaryRef : undefined} tabIndex={mode === "ready" && active ? -1 : undefined} className="inspection-card-enter rounded-lg focus-visible:outline-2 focus-visible:outline-violet-600">
+    <PlanSummary approved={false} adjusted={false} routesOptimised={false} onReview={reviewResident} disabled={disabled} />
+  </div>
+  const planningResident = <div data-resident-review ref={mode === "ready" ? residentRef : undefined} tabIndex={mode === "ready" && active ? -1 : undefined} className="inspection-card-enter rounded-lg focus-visible:outline-2 focus-visible:outline-violet-600">
+    <ResidentCard disabled={disabled} onApply={() => onDecision(id, "recommended", true)} onKeep={() => onDecision(id, "standard", false)} />
+  </div>
+  const showPlanningSummary = ["plan-summary", "plan-resident", "plan-panel", "ready"].includes(mode)
+  const showPlanningResident = ["plan-resident", "plan-panel", "ready"].includes(mode)
   const reviewCards = <>
     <PlanSummary approved adjusted={adjusted} routesOptimised onReview={reviewResident} disabled={disabled} />
     <ResidentAdjustment adjusted={adjusted} />
@@ -108,8 +111,9 @@ function AssistantReply({ message, active, onReady, onDecision, onReview, onPane
   return <div data-assistant-message={id} data-phase={phase} data-mode={mode} className="flex flex-col gap-4">
     <StreamingText text={intro} speed={100} onDone={introDone} autoScroll={false} />
     {showTrace && <Thinking title={traceTitle} steps={steps} completed={traceProgress} disabled={!active} />}
-    {phase === "planning" && loading && <LoadingSurface label="Loading tentative plan, resident review and technician route">{planningCards}</LoadingSurface>}
-    {phase === "planning" && mode === "ready" && planningCards}
+    {phase === "planning" && loading && <LoadingSurface label="Loading Tower C inspection summary">{planningSummary}</LoadingSurface>}
+    {phase === "planning" && showPlanningSummary && planningSummary}
+    {phase === "planning" && showPlanningResident && planningResident}
     {phase === "routing" && (mode === "route-optimised" || mode === "route-done") && <>
       <div data-route-success className="flex items-center gap-2 rounded-xl bg-emerald-50 p-4 text-sm font-semibold leading-5 text-emerald-800"><CheckCircle2 aria-hidden="true" className="size-4 shrink-0" /><span>Route optimised</span></div>
       <StreamingText text={routeCompletionText} speed={100} onDone={routeDone} autoScroll={false} />
@@ -181,7 +185,7 @@ export function OctDemo() {
     }
   }, [activeId, isThinking])
 
-  return <main className="oct-demo flex h-full min-w-0 flex-col bg-background font-sans lg:flex-row">
+  return <main className="oct-demo flex h-full min-w-0 flex-col overflow-hidden bg-background font-sans lg:flex-row">
     <section aria-label="Conversation" className={`flex min-h-0 min-w-0 flex-1 flex-col ${panelOpen ? "max-lg:basis-1/2" : ""}`}>
     <div ref={scrollRef} data-chat-scroll className="flex-1 overflow-y-auto bg-white">
       {messages.length === 0 ? <div className="flex min-h-full items-start justify-center bg-white p-6 pt-12 md:pt-[240px]">
@@ -201,12 +205,11 @@ export function OctDemo() {
     </div>
     {messages.length > 0 && <div className="flex shrink-0 justify-center px-4 pb-6"><PromptBar onSend={send} isThinking={isThinking} /></div>}
     </section>
-    <aside aria-label="Inspection plan review" hidden={!panelOpen} className={panelOpen ? "min-h-0 min-w-0 overflow-y-auto border-t border-slate-200 bg-slate-50 p-4 max-lg:flex-1 lg:w-[34%] lg:min-w-[380px] lg:max-w-[560px] lg:shrink-0 lg:border-t-0 lg:border-l lg:p-5" : "hidden"}>
-      <header className="mb-4">
-        <h2 className="text-lg font-semibold text-slate-800">Inspection schedule</h2>
-        <p className="mt-1 text-xs leading-5 text-slate-500">Tower C · Tuesday, 13 October</p>
+    <aside aria-label="Inspection plan review" hidden={!panelOpen} className={panelOpen ? "inspection-panel-enter flex min-h-0 min-w-0 flex-col border-t border-slate-200 bg-slate-50 max-lg:flex-1 lg:w-[34%] lg:min-w-[380px] lg:max-w-[560px] lg:shrink-0 lg:border-t-0 lg:border-l" : "hidden"}>
+      <header className="shrink-0 border-b border-slate-200 bg-white px-4 py-4 lg:px-5">
+        <h2 className="text-base font-semibold text-slate-800">Inspection schedule</h2>
       </header>
-      {panel && <div className="flex min-w-0 flex-col gap-4">
+      {panel && <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto p-4 lg:p-5">
         {panel.loading ? <LoadingSurface label="Loading tentative technician route"><RouteCard state={panel.state} live={panel.confirmed} /></LoadingSurface> : <RouteCard state={panel.state} live={panel.confirmed} />}
         {panel.reviewable && <>
           <InspectionAction data-schedule-review variant="outline" aria-expanded={showFullSchedule} aria-controls="building-schedule" onClick={() => setShowFullSchedule(value => !value)}>{showFullSchedule ? "Hide full schedule" : "Review full schedule"}</InspectionAction>
