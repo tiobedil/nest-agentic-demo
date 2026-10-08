@@ -36,7 +36,7 @@ function TextStream({ text, speed = 20, onDone, autoScroll = true }: StreamingTe
     else el.scrollIntoView({ behavior, block: "end" })
   }, [n, autoScroll])
 
-  return <p className="text-sm leading-relaxed text-slate-800">{words.slice(0, n).join(" ")}{n < words.length && <span aria-hidden="true" className="ml-0.5 inline-block h-4 w-0.5 translate-y-0.5 bg-primary motion-safe:animate-pulse" />}<span ref={anchorRef} aria-hidden="true" /></p>
+  return <p className="text-sm leading-relaxed text-slate-800">{words.slice(0, n).map((word, index) => <span key={index} className="streaming-word">{index > 0 ? " " : ""}{word}</span>)}{n < words.length && <span aria-hidden="true" className="ml-0.5 inline-block h-4 w-0.5 translate-y-0.5 bg-primary motion-safe:animate-pulse" />}<span ref={anchorRef} aria-hidden="true" /></p>
 }
 
 export function StreamingText(props: StreamingTextProps) {
