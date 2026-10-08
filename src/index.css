@@ -316,3 +316,14 @@ body {
     animation-duration: 100ms;
   }
 }
+
+.streaming-cursor {
+  transition-property: transform;
+  transition-timing-function: var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .streaming-cursor {
+    transition: none;
+  }
+}
