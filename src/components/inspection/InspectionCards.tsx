@@ -70,8 +70,15 @@ export function RouteCard({ state, live }: { state: RouteState; live: boolean })
       <div><p className="text-xs text-slate-500">Technician 4 · Afternoon visits</p><h2 className="mt-1 text-base font-semibold text-slate-800">{state === "original" ? "Tentative route" : state === "exception" ? "Updated tentative route" : "Optimised route"}</h2></div>
       <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">{live ? "Confirmed" : "Tentative"}</span>
     </div>
+    <div className={`grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none ${state === "original" ? "grid-rows-[0fr]" : "grid-rows-[1fr]"}`}><div className="min-h-0 overflow-hidden">
+    <div data-route-efficiency className="mb-3 grid" aria-live="polite">
+      {([
+        { phase: "exception", text: "3 floor changes · Optimisation pending", colour: "bg-amber-50 text-amber-800" },
+        { phase: "optimised", text: "Floor changes: 3 → 1 · 2 fewer", colour: "bg-emerald-50 text-emerald-800" },
+      ] as const).map(item => <p key={item.phase} aria-hidden={state !== item.phase} className={`col-start-1 row-start-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-opacity duration-200 ease-out motion-reduce:transition-none ${item.colour} ${state === item.phase ? "opacity-100" : "pointer-events-none opacity-0"}`}>{item.text}</p>)}
+    </div>
+    </div></div>
     <div className="grid grid-cols-[4rem_minmax(0,1fr)_auto] sm:grid-cols-[4.5rem_minmax(0,1fr)_auto] gap-2 px-2 text-xs text-slate-500" aria-hidden="true"><span>Time</span><span>Apartment</span><span className="text-right">Floor</span></div>
-    {state !== "original" && <p data-route-efficiency className={`mt-2 rounded-lg px-2 py-1.5 text-xs font-medium ${state === "optimised" ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"}`}>{state === "optimised" ? "Floor changes: 3 → 1 · 2 fewer" : "3 floor changes · Optimisation pending"}</p>}
     <div role="list" aria-label="Technician 4 afternoon route" className="relative mt-2 shrink-0" style={{ height: stops.length * 52 }}>
       <div aria-hidden="true" data-route-times className="pointer-events-none absolute inset-0 z-20">
         {stops.map(stop => <div key={stop.time} className="flex h-[52px] items-center px-2"><span className="text-xs tabular-nums text-slate-600">{stop.time}</span></div>)}
