@@ -1,31 +1,44 @@
 import { useEffect, useRef, useState } from "react"
-export function StreamingText({ text, speed = 20, onDone }: { text: string; speed?: number; onDone?: () => void }) {
+
+type StreamingTextProps = { text: string; speed?: number; onDone?: () => void; autoScroll?: boolean }
+
+function TextStream({ text, speed = 20, onDone, autoScroll = true }: StreamingTextProps) {
   const words = text.split(" ")
   const [n, setN] = useState(0)
   const anchorRef = useRef<HTMLSpanElement>(null)
-  useEffect(() => { setN(0) }, [text])
+  const onDoneRef = useRef(onDone)
+  const completedRef = useRef(false)
+
+  useEffect(() => { onDoneRef.current = onDone }, [onDone])
   useEffect(() => {
     if (n < words.length) {
-      const t = setTimeout(() => setN(v=>v+1), speed)
-      return () => clearTimeout(t)
-    } else {
-      onDone?.()
+      const timer = window.setTimeout(() => setN(value => value + 1), speed)
+      return () => window.clearTimeout(timer)
+    }
+    if (!completedRef.current) {
+      completedRef.current = true
+      onDoneRef.current?.()
     }
   }, [n, words.length, speed])
-  // Auto-scroll ke bawah tiap kata baru muncul — cari scroll container terdekat lalu scroll smooth
+
   useEffect(() => {
-    if (n === 0) return
+    if (n === 0 || !autoScroll) return
     const el = anchorRef.current
     if (!el) return
-    // cari parent yang scrollable (overflow-y-auto)
     let parent: HTMLElement | null = el.parentElement
     while (parent) {
       const style = getComputedStyle(parent)
       if (/(auto|scroll)/.test(style.overflowY) && parent.scrollHeight > parent.clientHeight) break
       parent = parent.parentElement
     }
-    if (parent) parent.scrollTo({ top: parent.scrollHeight, behavior: "smooth" })
-    else el.scrollIntoView({ behavior: "smooth", block: "end" })
-  }, [n])
-  return <p className="text-sm leading-relaxed text-gray-800">{words.slice(0,n).join(" ")}{n < words.length && <span className="ml-0.5 inline-block h-4 w-0.5 translate-y-0.5 bg-primary animate-pulse" />}<span ref={anchorRef} aria-hidden /></p>
+    const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"
+    if (parent) parent.scrollTo({ top: parent.scrollHeight, behavior })
+    else el.scrollIntoView({ behavior, block: "end" })
+  }, [n, autoScroll])
+
+  return <p className="text-sm leading-relaxed text-slate-800">{words.slice(0, n).join(" ")}{n < words.length && <span aria-hidden="true" className="ml-0.5 inline-block h-4 w-0.5 translate-y-0.5 bg-primary motion-safe:animate-pulse" />}<span ref={anchorRef} aria-hidden="true" /></p>
+}
+
+export function StreamingText(props: StreamingTextProps) {
+  return <TextStream key={props.text} {...props} />
 }

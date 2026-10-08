@@ -1,0 +1,337 @@
+const { chromium } = require('playwright');
+const { default: AxeBuilder } = require('@axe-core/playwright');
+const assert = require('node:assert/strict');
+
+(async () => {
+  const browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE });
+  try {
+    const context = await browser.newContext({ viewport: { width: 1440, height: 1100 } });
+    const page = await context.newPage();
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    const base = process.env.DEMO_BASE_URL || 'http://localhost:5173';
+    const textbox = page.getByRole('textbox', { name: 'Message the assistant' });
+    const atBottom = async targetPage => {
+      const gap = await targetPage.locator('[data-chat-scroll]').evaluate(element => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve(element.scrollHeight - element.clientHeight - element.scrollTop)))));
+      assert.ok(gap <= 2, `The conversation is ${gap}px away from the bottom`);
+    };
+    const watchThinking = async targetPage => {
+      await targetPage.locator('.oct-demo').waitFor();
+      await targetPage.evaluate(() => {
+        window.thinkingFailures = [];
+        const validate = () => {
+          for (const trace of document.querySelectorAll('.oct-demo [data-thinking]')) {
+            if (trace.querySelector('button')?.getAttribute('aria-expanded') !== 'true') continue;
+            const progress = Number(trace.dataset.thinkingProgress);
+            const total = Number(trace.dataset.thinkingTotal);
+            const rows = [...trace.querySelectorAll('[data-thinking-step]')];
+            const valid = rows.length === Math.min(progress + 1, total) && rows.every((row, index) => Number(row.dataset.thinkingStep) === index && row.dataset.thinkingState === (index < progress ? 'complete' : 'current'));
+            if (!valid) window.thinkingFailures.push({ progress, total, visible: rows.length });
+          }
+        };
+        new MutationObserver(validate).observe(document.querySelector('.oct-demo'), { subtree: true, childList: true, attributes: true });
+      });
+    };
+    const ready = async reply => {
+      await reply.waitFor();
+      const phase = await reply.getAttribute('data-phase');
+      const expectedSteps = phase === 'review' ? 1 : 5;
+      let skeletonDimensions;
+      if (await reply.getAttribute('data-mode') !== 'ready') {
+        if (await reply.getAttribute('data-mode') !== 'loading') {
+          await reply.locator(':scope[data-mode="processing"]').waitFor();
+          assert.equal(await reply.locator('[data-loading-surface]').count(), 0);
+          assert.equal(await reply.locator('[data-slot="card"]').count(), 0);
+          await atBottom(reply.page());
+        }
+        await reply.locator('[data-loading-surface]').waitFor();
+        await atBottom(reply.page());
+        assert.equal(await reply.locator('svg[aria-label="Completed"]').count(), expectedSteps);
+        if (phase === 'execution') assert.equal(await reply.getByText('Generating UI', { exact: true }).count(), 0);
+        else await reply.getByText('Generating UI', { exact: true }).waitFor();
+        skeletonDimensions = await reply.locator('[data-slot="card"]').evaluateAll(cards => cards.map(card => ({ width: card.getBoundingClientRect().width, height: card.getBoundingClientRect().height })));
+      }
+      await reply.locator(':scope[data-mode="ready"]').waitFor();
+      if (phase === 'planning') {
+        const focused = await reply.locator('[data-plan-summary]').evaluate(element => element === document.activeElement);
+        assert.equal(focused, true);
+        const visible = await reply.locator('[data-plan-summary]').evaluate(element => {
+          const viewport = element.closest('[data-chat-scroll]').getBoundingClientRect();
+          const summary = element.getBoundingClientRect();
+          return summary.top >= viewport.top - 1 && summary.top < viewport.bottom;
+        });
+        assert.equal(visible, true);
+      }
+      if (skeletonDimensions) assert.deepEqual(await reply.locator('[data-slot="card"]').evaluateAll(cards => cards.map(card => ({ width: card.getBoundingClientRect().width, height: card.getBoundingClientRect().height }))), skeletonDimensions);
+    };
+    const inactive = async reply => assert.equal(await reply.locator('button:not([data-schedule-review])').evaluateAll(buttons => buttons.every(button => button.disabled)), true);
+    const dimensions = reply => reply.locator('[data-slot="card"]').evaluateAll(cards => cards.map(card => ({ width: card.getBoundingClientRect().width, height: card.getBoundingClientRect().height })));
+
+    await page.goto(`${base}/oct-demo`);
+    assert.equal(await page.title(), "Nest Operations");
+    await watchThinking(page);
+    assert.ok(page.url().endsWith("/inspection-planning"));
+    const agentMenu = page.getByRole("button", { name: "AI Agent", exact: true });
+    await agentMenu.click();
+    assert.equal(await page.getByRole("menuitem", { name: "Inspection Planning", exact: true }).count(), 1);
+    assert.equal((await page.locator("body").innerText()).toLowerCase().includes("demo"), false);
+    await agentMenu.click();
+    const reference = await context.newPage();
+    await reference.goto(`${base}/pgagent2`);
+    assert.equal(await page.getByRole('heading', { name: 'How can I help you today?' }).textContent(), await reference.getByRole('heading', { name: 'How can I help you today?' }).textContent());
+    assert.deepEqual(await textbox.boundingBox(), await reference.getByRole('textbox', { name: 'Message the assistant' }).boundingBox());
+    await textbox.focus();
+    assert.equal(await textbox.evaluate(element => getComputedStyle(element).outlineStyle), 'none');
+
+    await textbox.fill('hello');
+    await textbox.press('Enter');
+    const initial = page.locator('[data-assistant-message="2"]');
+    await initial.waitFor();
+    await atBottom(page);
+    assert.equal(await initial.getAttribute('data-mode'), 'intro');
+    assert.equal(await initial.getByRole('button', { name: 'Planning Tower C inspections' }).count(), 0);
+    const intro = await initial.locator('p').first().textContent();
+    assert.ok(intro.length < 180);
+    await initial.locator(':scope[data-mode="processing"]').waitFor();
+    assert.equal(await initial.locator('[data-loading-surface]').count(), 0);
+    await initial.getByText('Generating UI', { exact: true }).waitFor();
+    await initial.locator('[data-loading-surface]').waitFor();
+    assert.equal(await initial.locator('svg[aria-label="Completed"]').count(), 5);
+    const skeletonDimensions = await dimensions(initial);
+    assert.equal(skeletonDimensions.length, 3);
+    assert.equal(await initial.getByRole('heading', { name: 'Amar Sundaran', exact: true }).count(), 0);
+    await ready(initial);
+    assert.deepEqual(await dimensions(initial), skeletonDimensions);
+    assert.deepEqual(await initial.locator('[data-slot="card"] h2').allTextContents(), ['Tower C — Fire-safety inspections', 'Tentative route', 'Amar Sundaran']);
+    assert.equal(await initial.getByRole('button', { name: 'Planning Tower C inspections' }).evaluate(element => element.parentElement.className), 'w-full');
+    const timeline = initial.locator('[data-floor-sequence]');
+    assert.equal(await timeline.locator('ol').evaluate(element => getComputedStyle(element).columnGap), '16px');
+    assert.equal(await timeline.locator('svg').count(), 0);
+    const endpoints = await timeline.locator('ol').evaluate(list => {
+      const line = getComputedStyle(list, '::before');
+      return { start: parseFloat(line.left), end: parseFloat(line.right), radius: list.querySelector('li span').getBoundingClientRect().width / 2 };
+    });
+    assert.equal(endpoints.start, endpoints.radius);
+    assert.equal(endpoints.end, endpoints.radius);
+    assert.equal(await timeline.locator('li > span.bg-amber-100').count(), 1);
+    assert.equal(await timeline.locator('li > span.bg-violet-100').count(), 0);
+    assert.ok((await initial.locator('[data-unit="605"]').getAttribute('class')).includes('bg-amber-50'));
+    assert.equal(await timeline.locator('li > span.bg-slate-100').count(), 7);
+    assert.equal(await initial.locator('.oct-route-row').evaluateAll(rows => rows.every(row => row.lastElementChild.classList.contains(row.dataset.unit === '605' ? 'bg-amber-100' : 'bg-slate-100'))), true);
+    const standardOption = initial.getByRole('radio', { name: /Keep standard slot/ });
+    await standardOption.scrollIntoViewIfNeeded();
+    const radioScroll = await page.locator('[data-chat-scroll]').evaluate(element => element.scrollTop);
+    await standardOption.check();
+    await page.waitForTimeout(50);
+    assert.equal(await page.locator('[data-chat-scroll]').evaluate(element => element.scrollTop), radioScroll);
+    await initial.getByRole('radio', { name: /Recommended for Amar/ }).check();
+    assert.equal(await page.locator('[data-chat-scroll]').evaluate(element => element.scrollTop), radioScroll);
+    const useSlot = initial.getByRole('button', { name: 'Use 5:45 PM' });
+    const actionBox = await useSlot.boundingBox();
+    const cardBox = await useSlot.locator('..').boundingBox();
+    assert.equal(actionBox.height, 40);
+    assert.equal(await useSlot.evaluate(element => getComputedStyle(element).fontSize), '16px');
+    assert.ok(cardBox.width - actionBox.width < 40);
+    const initialHtml = await initial.locator('[data-slot="card"]').first().innerHTML();
+    await useSlot.click();
+    await inactive(initial);
+    assert.equal((await initial.locator('[data-slot="card"]').first().innerHTML()).replace(/ disabled=""/g, ""), initialHtml);
+
+    const routing = page.locator('[data-assistant-message="4"]');
+    await routing.waitFor();
+    await atBottom(page);
+    await routing.locator(':scope[data-mode="processing"]').waitFor();
+    assert.equal(await routing.locator('[data-slot="card"]').count(), 0);
+    assert.equal(await routing.locator('[data-loading-surface]').count(), 0);
+    await page.locator('[data-chat-scroll]').evaluate(element => { element.scrollTop = 0; });
+    await routing.locator('svg[aria-label="Completed"]').first().waitFor();
+    await atBottom(page);
+    await routing.locator('[data-loading-surface]').waitFor();
+    await atBottom(page);
+    assert.equal(await routing.locator('svg[aria-label="Completed"]').count(), 5);
+    const routeSkeleton = await dimensions(routing);
+    await routing.locator(':scope[data-mode="route-original"]').waitFor();
+    assert.deepEqual(await dimensions(routing), routeSkeleton);
+    const amarNode = await routing.locator('[data-unit="605"]').elementHandle();
+    assert.ok((await routing.locator('[data-unit="605"]').getAttribute('class')).includes('bg-amber-50'));
+    assert.equal(await routing.locator('[data-floor-sequence] li > span.bg-amber-100').count(), 1);
+    await routing.locator('[data-unit="605"][data-time="5:45 PM"]').waitFor();
+    assert.equal(await routing.locator('[data-unit="205"]').getAttribute('data-time'), '4:30 PM');
+    assert.ok((await routing.locator('[data-unit="605"]').getAttribute('class')).includes('bg-violet-50'));
+    assert.equal(await routing.locator('[data-floor-sequence] li > span.bg-violet-100').count(), 1);
+    assert.equal(await routing.locator('[data-floor-sequence] li > span.bg-amber-100').count(), 0);
+    const motion = await routing.evaluate(async reply => {
+      const row = reply.querySelector('[data-unit="605"]');
+      const marker = reply.querySelector('[data-floor][aria-label*="Unit 605,"]');
+      const times = reply.querySelector('[data-route-times]');
+      const samples = [];
+      const timing = row.getAnimations()[0]?.effect.getTiming();
+      const start = performance.now();
+      await new Promise(resolve => {
+        const sample = () => {
+          samples.push({
+            y: new DOMMatrix(getComputedStyle(row).transform).m42,
+            x: new DOMMatrix(getComputedStyle(marker).transform).m41,
+            times: [...times.children].map(slot => slot.offsetTop),
+          });
+          if (performance.now() - start >= 1200) resolve();
+          else requestAnimationFrame(sample);
+        };
+        requestAnimationFrame(sample);
+      });
+      return { samples, duration: timing?.duration, easing: timing?.easing };
+    });
+    assert.equal(motion.duration, 1200);
+    assert.equal(motion.easing, 'cubic-bezier(0.77, 0, 0.175, 1)');
+    assert.ok(new Set(motion.samples.map(sample => Math.round(sample.y))).size > 15, 'The appointment must visibly pass through intermediate positions');
+    assert.ok(motion.samples.some(sample => sample.y > 140 && sample.y < 430));
+    assert.ok(motion.samples.every((sample, index) => !index || sample.y >= motion.samples[index - 1].y - 0.01));
+    assert.ok(motion.samples.every(sample => Math.abs(sample.y - sample.x * 2) < 0.1), 'The floor marker must move in sync with its appointment');
+    assert.ok(motion.samples.every(sample => JSON.stringify(sample.times) === JSON.stringify(motion.samples[0].times)), 'Clock slots must stay stationary');
+    assert.deepEqual(await routing.locator('[data-floor]').evaluateAll(stops => stops.map(stop => Number(stop.dataset.floor))), [6, 6, 2, 6, 2, 2, 2, 6]);
+    await routing.locator('[data-unit="202"][data-time="4:00 PM"]').waitFor();
+    assert.equal(await amarNode.evaluate(element => element.isConnected && element.dataset.time === '5:45 PM'), true);
+    assert.deepEqual(await routing.locator('[data-floor]').evaluateAll(stops => stops.map(stop => Number(stop.dataset.floor))), [2, 2, 2, 2, 6, 6, 6, 6]);
+    assert.equal(await routing.locator('[data-floor]').evaluateAll(stops => new Set(stops.map(stop => Math.round(stop.getBoundingClientRect().top))).size), 1);
+    const banner = routing.locator('[data-route-success]');
+    await banner.waitFor();
+    assert.ok((await banner.getAttribute('class')).includes('bg-emerald-50'));
+    const alignment = await banner.evaluate(element => {
+      const icon = element.querySelector('svg').getBoundingClientRect();
+      const label = element.querySelector('span').getBoundingClientRect();
+      return Math.abs(icon.y + icon.height / 2 - label.y - label.height / 2);
+    });
+    assert.ok(alignment < 1);
+    const review = page.locator('[data-assistant-message="5"]');
+    await ready(review);
+    await inactive(routing);
+    assert.equal(await initial.locator('[data-unit="605"]').getAttribute('data-time'), '4:30 PM');
+    assert.equal(await page.locator('[data-assistant-message]').count(), 3);
+    const scheduleButton = review.getByRole('button', { name: 'Review full schedule' });
+    await scheduleButton.scrollIntoViewIfNeeded();
+    const scheduleScroll = await page.locator('[data-chat-scroll]').evaluate(element => element.scrollTop);
+    await scheduleButton.click();
+    await page.waitForTimeout(50);
+    assert.equal(await page.locator('[data-chat-scroll]').evaluate(element => element.scrollTop), scheduleScroll);
+    const disclosure = review.locator('summary').first();
+    await disclosure.scrollIntoViewIfNeeded();
+    const disclosureScroll = await page.locator('[data-chat-scroll]').evaluate(element => element.scrollTop);
+    await disclosure.click();
+    await page.waitForTimeout(50);
+    assert.equal(await page.locator('[data-chat-scroll]').evaluate(element => element.scrollTop), disclosureScroll);
+    assert.equal(await review.locator('tbody tr').count(), 116);
+    assert.equal(await review.locator('details').count(), 6);
+    const axe = await new AxeBuilder({ page }).include('.oct-demo').analyze();
+    assert.deepEqual(axe.violations, []);
+    await review.getByRole('button', { name: 'Confirm & notify residents' }).click();
+    await inactive(review);
+    const result = page.locator('[data-assistant-message="7"]');
+    await ready(result);
+    await result.getByRole('heading', { name: 'Inspection plan live', exact: true }).waitFor();
+    assert.equal((await page.locator("body").innerText()).toLowerCase().includes("demo"), false);
+    assert.equal(await result.getByText('Live · Demo', { exact: true }).count(), 0);
+    assert.equal(await result.locator('[data-slot="card"] .space-y-3 svg').evaluateAll(icons => icons.length === 6 && icons.every(icon => icon.classList.contains('lucide-check'))), true);
+    assert.equal(await review.locator('tbody tr').count(), 116);
+    assert.equal(await page.getByRole('button', { name: 'Restart demo' }).count(), 0);
+    assert.equal(await page.getByText('Working on your inspection plan…', { exact: true }).count(), 0);
+
+    await textbox.fill('another request');
+    await textbox.press('Enter');
+    const nextPlan = page.locator('[data-assistant-message="9"]');
+    await ready(nextPlan);
+    await inactive(result);
+    const historicalSchedule = review.locator('[data-schedule-review]');
+    assert.equal(await historicalSchedule.isEnabled(), true);
+    await historicalSchedule.click();
+    assert.equal(await historicalSchedule.textContent(), 'Review full schedule');
+    await historicalSchedule.click();
+    assert.equal(await review.locator('tbody tr').count(), 116);
+    assert.equal(await review.getByRole('button', { name: 'Confirm & notify residents' }).isDisabled(), true);
+    const historicalDisclosure = review.locator('summary').first();
+    const previouslyOpen = await historicalDisclosure.evaluate(summary => summary.parentElement.open);
+    await historicalDisclosure.click();
+    assert.equal(await historicalDisclosure.evaluate(summary => summary.parentElement.open), !previouslyOpen);
+    assert.equal(await page.getByText('116 / 116 apartments scheduled', { exact: true }).count(), 1);
+    assert.equal(await page.getByText('another request', { exact: true }).count(), 1);
+    await nextPlan.getByRole('radio', { name: /Keep standard slot/ }).check();
+    await nextPlan.getByRole('button', { name: 'Keep 4:30 PM' }).click();
+    const standardReview = page.locator('[data-assistant-message="11"]');
+    await ready(standardReview);
+    await standardReview.getByText('Standard slot retained. Higher failed-access risk acknowledged;', { exact: false }).waitFor();
+    assert.ok((await standardReview.getByText('4:30 PM · Resident-present access', { exact: true }).getAttribute('class')).includes('text-amber-800'));
+    await standardReview.getByRole('button', { name: 'Confirm & notify residents' }).click();
+    const standardResult = page.locator('[data-assistant-message="13"]');
+    await ready(standardResult);
+    await standardResult.getByText('Amar’s 4:30 PM standard slot retained by operator', { exact: true }).waitFor();
+    assert.equal(await page.locator('[data-assistant-message]').count(), 7);
+    const followUp = await context.newPage();
+    await followUp.goto(`${base}/oct-demo`);
+    await watchThinking(followUp);
+    const followUpTextbox = followUp.getByRole('textbox', { name: 'Message the assistant' });
+    await followUpTextbox.fill('first prompt');
+    await followUpTextbox.press('Enter');
+    const oldReply = followUp.locator('[data-assistant-message="2"]');
+    await ready(oldReply);
+    assert.equal(await oldReply.getByRole('button', { name: 'Use 5:45 PM' }).isEnabled(), true);
+    await followUpTextbox.fill('a new unrelated prompt');
+    await followUpTextbox.press('Enter');
+    await inactive(oldReply);
+    assert.equal(await oldReply.locator('fieldset').evaluate(element => element.disabled), true);
+    await oldReply.getByRole('button', { name: 'Use 5:45 PM' }).dispatchEvent('click');
+    assert.equal(await followUp.locator('[data-assistant-message]').count(), 2);
+    await ready(followUp.locator('[data-assistant-message="4"]'));
+    assert.equal(await oldReply.getByRole('heading', { name: 'Amar Sundaran', exact: true }).count(), 1);
+
+    console.log('Desktop: sequential Thinking, final execution without Generating UI, UI gating, synchronized skeletons, compact 16px floor timeline, yellow-to-purple resident constraint, reordered cards, aligned success banner, summary focus, responsive incoming-message follow, stable local controls, append-only history and both branches PASS');
+
+    const mobileContext = await browser.newContext({ viewport: { width: 320, height: 740 }, reducedMotion: 'reduce' });
+    const mobile = await mobileContext.newPage();
+    await mobile.goto(`${base}/oct-demo`);
+    await watchThinking(mobile);
+    const mobileTextbox = mobile.getByRole('textbox', { name: 'Message the assistant' });
+    await mobileTextbox.fill('anything');
+    await mobileTextbox.press('Enter');
+    const mobilePlan = mobile.locator('[data-assistant-message="2"]');
+    await ready(mobilePlan);
+    assert.equal(await mobilePlan.locator('[data-floor-sequence] ol').evaluate(element => getComputedStyle(element).columnGap), '16px');
+    assert.equal(await mobilePlan.locator('[data-floor-sequence]').evaluate(sequence => {
+      const bounds = sequence.getBoundingClientRect();
+      const timeline = sequence.querySelector('[role="group"]');
+      return timeline.scrollWidth === timeline.clientWidth && getComputedStyle(timeline).overflowX === 'visible' && [...sequence.querySelectorAll('[data-floor]')].every(marker => {
+        const floor = marker.getBoundingClientRect();
+        return floor.left >= bounds.left - 1 && floor.right <= bounds.right + 1;
+      });
+    }), true, 'All eight floors must fit without scrolling');
+    assert.equal(await mobilePlan.locator('[data-floor]').evaluateAll(stops => new Set(stops.map(stop => Math.round(stop.getBoundingClientRect().top))).size), 1);
+    const overflow = await mobile.evaluate(() => [...document.querySelectorAll('.oct-demo, .oct-demo *')].filter(element => element.scrollWidth > element.clientWidth + 1 && getComputedStyle(element).overflowX === 'visible').map(element => element.tagName));
+    assert.deepEqual(overflow, []);
+    const rowOverflow = await mobilePlan.locator('[data-unit="605"]').evaluate(row => [...row.querySelectorAll('p')].some(paragraph => paragraph.getBoundingClientRect().bottom > row.getBoundingClientRect().bottom + 1));
+    assert.equal(rowOverflow, false);
+    await mobilePlan.getByRole('button', { name: 'Use 5:45 PM' }).click();
+    const mobileRoute = mobile.locator('[data-assistant-message="4"]');
+    await mobileRoute.locator(':scope[data-mode="processing"]').waitFor();
+    assert.equal(await mobileRoute.locator('[data-slot="card"]').count(), 0);
+    await mobileRoute.locator(':scope[data-mode="route-original"]').waitFor();
+    assert.equal(await mobileRoute.locator('[data-unit="605"]').evaluate(element => getComputedStyle(element).transitionDuration), '0s');
+    await mobileRoute.locator('[data-unit="605"][data-time="5:45 PM"]').waitFor();
+    assert.equal(await mobileRoute.locator('[data-route-position]').evaluateAll(elements => elements.every(element => element.getAnimations().length === 0)), true);
+    const mobileReview = mobile.locator('[data-assistant-message="5"]');
+    await ready(mobileReview);
+    const amarMarker = mobileRoute.locator('[data-resident-marker]');
+    assert.ok((await amarMarker.getAttribute('class')).includes('bg-violet-100'));
+    assert.equal(await amarMarker.evaluate(marker => {
+      const viewport = marker.closest('[role="group"]').getBoundingClientRect();
+      const bounds = marker.getBoundingClientRect();
+      return bounds.left >= viewport.left - 1 && bounds.right <= viewport.right + 1;
+    }), true, 'Amar’s purple floor marker must remain visible on a narrow timeline');
+    const mobileAxe = await new AxeBuilder({ page: mobile }).include('.oct-demo').analyze();
+    assert.deepEqual(mobileAxe.violations, []);
+    assert.deepEqual(errors, []);
+    assert.deepEqual(await page.evaluate(() => window.thinkingFailures), []);
+    assert.deepEqual(await followUp.evaluate(() => window.thinkingFailures), []);
+    assert.deepEqual(await mobile.evaluate(() => window.thinkingFailures), []);
+    console.log('Mobile: 320px reflow, reduced motion, append-only route and no automated accessibility violations PASS');
+  } finally {
+    await browser.close();
+  }
+})().catch(error => { console.error(error); process.exit(1); });

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { ArrowUp, Paperclip, Mic, Square } from "lucide-react"
 import { BorderBeam } from "border-beam"
 
-export function PromptBar({ onSend, isThinking }: { onSend: (t: string) => void; isThinking?: boolean }) {
+export function PromptBar({ onSend, isThinking, placeholder = "Ask anything...", label = "Message the assistant", showAccessories = true }: { onSend: (t: string) => void; isThinking?: boolean; placeholder?: string; label?: string; showAccessories?: boolean }) {
   const [draft, setDraft] = useState("")
   const ref = useRef<HTMLTextAreaElement>(null)
   const canSend = !isThinking && draft.trim().length > 0
@@ -81,7 +81,8 @@ export function PromptBar({ onSend, isThinking }: { onSend: (t: string) => void;
           value={draft}
           onChange={e => setDraft(e.target.value)}
           onKeyDown={e => { if (isThinking) { if (e.key === "Enter" && !e.shiftKey) e.preventDefault(); return } if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send() } }}
-          placeholder="Ask anything..."
+          aria-label={label}
+          placeholder={placeholder}
           rows={1}
           className={`promptbar-scroll min-h-[54px] max-h-[144px] w-full resize-none bg-transparent px-3.5 py-3.5 text-[15.5px] leading-[1.625] text-slate-800 outline-none placeholder:text-muted-foreground/50 ${isScrollable ? "overflow-y-auto [scrollbar-width:thin] [scrollbar-color:transparent_transparent] hover:[scrollbar-color:#e2e8f0_transparent]" : "overflow-hidden [scrollbar-width:none]"}`}
           style={{ fontFamily: 'var(--sans)', color: "#1e293b" }}
@@ -91,14 +92,14 @@ export function PromptBar({ onSend, isThinking }: { onSend: (t: string) => void;
       </div>
       <div className="flex shrink-0 items-center justify-between bg-white pt-1">
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="size-9 rounded-full text-muted-foreground/60 hover:text-muted-foreground"><Paperclip className="size-[18px]" /></Button>
+          {showAccessories && <Button aria-label="Attach a file" variant="ghost" size="icon" className="size-9 rounded-full text-muted-foreground/60 hover:text-muted-foreground"><Paperclip className="size-[18px]" /></Button>}
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="size-9 rounded-full text-muted-foreground/60 hover:text-muted-foreground"><Mic className="size-[18px]" /></Button>
+          {showAccessories && <Button aria-label="Use microphone" variant="ghost" size="icon" className="size-9 rounded-full text-muted-foreground/60 hover:text-muted-foreground"><Mic className="size-[18px]" /></Button>}
           {isThinking ? (
-            <Button size="icon" variant="secondary" disabled className="size-9 rounded-full border border-border/15 opacity-100"><Square className="size-3.5 fill-current" /></Button>
+            <Button aria-label="Assistant is working" size="icon" variant="secondary" disabled className="size-9 rounded-full border border-border/15 opacity-100"><Square className="size-3.5 fill-current" /></Button>
           ) : (
-            <Button size="icon" disabled={!canSend} onClick={send} className={`size-9 rounded-full text-white ${canSend ? "bg-[oklch(60.6%_0.25_292.7)] hover:bg-[oklch(56%_0.25_292.7)]" : "bg-[#E8E8EC] text-white !opacity-100 hover:bg-[#E8E8EC]"}`}><ArrowUp className="size-[18px]" /></Button>
+            <Button aria-label="Send message" size="icon" disabled={!canSend} onClick={send} className={`size-9 rounded-full text-white ${canSend ? "bg-[oklch(60.6%_0.25_292.7)] hover:bg-[oklch(56%_0.25_292.7)]" : "bg-[#E8E8EC] text-white !opacity-100 hover:bg-[#E8E8EC]"}`}><ArrowUp className="size-[18px]" /></Button>
           )}
         </div>
       </div>
