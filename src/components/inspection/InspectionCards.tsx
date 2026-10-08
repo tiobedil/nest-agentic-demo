@@ -73,8 +73,8 @@ export function RouteCard({ state, live }: { state: RouteState; live: boolean })
     <div className={`grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none ${state === "original" ? "grid-rows-[0fr]" : "grid-rows-[1fr]"}`}><div className="min-h-0 overflow-hidden">
     <div data-route-efficiency className="mb-3 grid" aria-live="polite">
       {([
-        { phase: "exception", text: "3 floor changes · Optimisation pending", colour: "bg-amber-50 text-amber-800" },
-        { phase: "optimised", text: "Floor changes: 3 → 1 · 2 fewer", colour: "bg-emerald-50 text-emerald-800" },
+        { phase: "exception", text: "4 floor changes · Optimisation pending", colour: "bg-amber-50 text-amber-800" },
+        { phase: "optimised", text: "Floor changes: 4 → 1 · 3 fewer", colour: "bg-emerald-50 text-emerald-800" },
       ] as const).map(item => <p key={item.phase} aria-hidden={state !== item.phase} className={`col-start-1 row-start-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-opacity duration-200 ease-out motion-reduce:transition-none ${item.colour} ${state === item.phase ? "opacity-100" : "pointer-events-none opacity-0"}`}>{item.text}</p>)}
     </div>
     </div></div>
@@ -92,10 +92,14 @@ export function RouteCard({ state, live }: { state: RouteState; live: boolean })
   </Card>
 }
 
-export function PlanSummary({ approved, adjusted, routesOptimised, onConfirm, disabled = false }: { approved: boolean; adjusted: boolean; routesOptimised: boolean; onConfirm?: () => void; disabled?: boolean }) {
+export function PlanSummary({ approved, adjusted, routesOptimised, confirmed = false, onConfirm, disabled = false }: { approved: boolean; adjusted: boolean; routesOptimised: boolean; confirmed?: boolean; onConfirm?: () => void; disabled?: boolean }) {
+  if (confirmed) return <Card className="gap-0 p-4 shadow-none">
+    <h2 className="flex items-center gap-1.5 text-sm font-semibold text-slate-800"><CheckCircle2 aria-hidden="true" className="size-3.5 shrink-0 text-emerald-700" />Tower C · Inspection plan confirmed</h2>
+    <p className="mt-1 text-sm text-slate-700">116 apartments · 6 technicians · Residents notified</p>
+  </Card>
   return <Card className="gap-0 p-4 shadow-none">
     <div className="flex items-center justify-between gap-2"><h2 className="text-sm font-semibold text-slate-800">{approved ? "Tower C · Inspection plan ready" : "Tower C · Fire-safety inspections"}</h2><span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">Tentative</span></div>
-    <p className="mt-3 text-xs text-slate-700">116 apartments · 6 technicians · {approved ? `${adjusted ? 1 : 0} resident adjustment` : "1 requires review"}</p>
+    <p className="mt-1 text-xs text-slate-700">116 apartments · 6 technicians · {approved ? `${adjusted ? 1 : 0} resident adjustment` : "1 requires review"}</p>
     {approved && routesOptimised && <p className="mt-3 flex flex-nowrap items-center gap-2 text-xs leading-4 text-slate-700"><CheckCircle2 aria-hidden="true" className="block size-3.5 shrink-0 text-emerald-700" /><span className="translate-y-px whitespace-nowrap">All routes optimised{adjusted && " · Amar's 5:45 PM slot preserved"}</span></p>}
     {approved && <><p className="mt-3 text-[11px] text-slate-500">No resident notifications sent yet.</p><InspectionAction disabled={disabled} onClick={onConfirm} className="mt-3 text-sm">Confirm &amp; notify residents<ArrowRight aria-hidden="true" className="size-4" /></InspectionAction></>}
   </Card>

@@ -20,7 +20,8 @@ const reviewSteps = ["Checking plan readiness"]
 const openingText = "I’ll schedule the annual in-unit fire-safety inspections for all 116 apartments in Tower C on Tuesday, 13 October, and check resident access history before confirming the plan."
 const routeCompletionText = "Route optimised. Amar's appointment preserved."
 
-function AssistantReply({ message, active, onReady, onDecision, onReview, onPanelChange }: {
+function AssistantReply({ message, active, confirmed, onReady, onDecision, onReview, onPanelChange }: {
+  confirmed: boolean
   onPanelChange: (id: number, update: Partial<PanelState>) => void
   message: AssistantMessage
   active: boolean
@@ -82,14 +83,14 @@ function AssistantReply({ message, active, onReady, onDecision, onReview, onPane
   }, [active, mode, id, onReady])
 
   const planningSummary = <div data-plan-summary className="inspection-card-enter rounded-lg">
-    <PlanSummary approved={false} adjusted={false} routesOptimised={false} disabled={disabled} />
+    <PlanSummary confirmed={confirmed} approved={false} adjusted={false} routesOptimised={false} disabled={disabled} />
   </div>
   const planningResident = <div data-resident-review className="inspection-card-enter rounded-lg focus-visible:outline-2 focus-visible:outline-violet-600">
     <ResidentCard applied={residentDecision} disabled={disabled} onApply={() => { setResidentDecision(true); onDecision(id, "recommended", true) }} />
   </div>
   const showPlanningSummary = ["plan-summary", "plan-resident", "plan-panel", "ready"].includes(mode)
   const showPlanningResident = ["plan-resident", "plan-panel", "ready"].includes(mode)
-  const reviewCards = <PlanSummary approved adjusted={adjusted} routesOptimised disabled={disabled} onConfirm={() => onDecision(id, "confirm", adjusted)} />
+  const reviewCards = <PlanSummary confirmed={confirmed} approved adjusted={adjusted} routesOptimised disabled={disabled} onConfirm={() => onDecision(id, "confirm", adjusted)} />
   const traceTitle = phase === "planning" ? "Planning Tower C inspections" : phase === "routing" ? "Automatically optimising technician route" : phase === "review" ? "Preparing inspection plan" : "Confirming and notifying residents"
   const showTrace = mode !== "intro"
 
@@ -179,8 +180,8 @@ export function OctDemo() {
       {messages.length === 0 ? <div className="flex min-h-full items-start justify-center bg-white p-6 pt-12 md:pt-[240px]">
         <div className="flex w-full max-w-2xl flex-col items-center gap-8">
           <div className="space-y-4 text-center">
-            <h1 className="text-[36px] font-semibold leading-none tracking-tight text-foreground/80">How can I help you today?</h1>
-            <p className="text-sm text-muted-foreground">Start a conversation. The assistant replies with the same message for now.</p>
+            <h1 className="text-[36px] font-semibold leading-none tracking-tight text-foreground/80">What would you like to get done?</h1>
+            <p className="text-sm text-muted-foreground">Ask me to help plan, coordinate or manage an operational task.</p>
           </div>
           <PromptBar onSend={send} isThinking={isThinking} />
         </div>
@@ -188,7 +189,7 @@ export function OctDemo() {
         <h1 className="sr-only">Inspection planning conversation</h1>
         {messages.map(message => message.role === "user"
           ? <div key={message.id} className="max-w-[78%] self-end rounded-2xl rounded-br-[6px] bg-violet-100 px-4 py-2.5 text-sm text-violet-950">{message.text}</div>
-          : <AssistantReply key={message.id} message={message} active={activeId === message.id} onReady={onReady} onDecision={onDecision} onReview={onReview} onPanelChange={onPanelChange} />)}
+          : <AssistantReply key={message.id} message={message} confirmed={panel?.confirmed ?? false} active={activeId === message.id} onReady={onReady} onDecision={onDecision} onReview={onReview} onPanelChange={onPanelChange} />)}
       </div>}
     </div>
     {messages.length > 0 && <div className="flex shrink-0 justify-center px-4 pb-6"><PromptBar onSend={send} isThinking={isThinking} /></div>}

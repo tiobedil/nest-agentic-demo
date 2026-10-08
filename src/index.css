@@ -300,3 +300,12 @@ body {
     animation: inspection-panel-enter 500ms var(--ease-drawer) both;
   }
 }
+
+.streaming-word {
+  display: inline-block;
+  white-space: pre;
+}
+
+.streaming-cursor {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
