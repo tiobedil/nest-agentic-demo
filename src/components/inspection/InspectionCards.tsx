@@ -1,4 +1,4 @@
-import { useId, useState } from "react"
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react"
 import type { ComponentProps, ReactNode } from "react"
 import { ArrowRight, Check, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -18,28 +18,63 @@ export function LoadingSurface({ children, label }: { children: ReactNode; label
 
 export function RouteCard({ state, live }: { state: RouteState; live: boolean }) {
   const stops = routeFor[state]
+  const cardRef = useRef<HTMLDivElement>(null)
+  const positions = useRef(new Map<string, string>())
+  const animations = useRef(new Map<string, Animation>())
+
+  useLayoutEffect(() => {
+    const card = cardRef.current
+    if (!card) return
+    const style = getComputedStyle(card)
+    const duration = Number.parseFloat(style.getPropertyValue("--inspection-route-duration"))
+    const easing = style.getPropertyValue("--ease-in-out").trim()
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    for (const element of card.querySelectorAll<HTMLElement>("[data-route-position]")) {
+      const key = element.dataset.routePosition!
+      const target = element.style.transform
+      const running = animations.current.get(key)
+      const previous = running?.playState === "running" ? getComputedStyle(element).transform : positions.current.get(key)
+      running?.cancel()
+      if (previous && previous !== target && duration > 0 && easing && !reducedMotion) {
+        const animation = element.animate([{ transform: previous }, { transform: target }], { duration, easing })
+        animations.current.set(key, animation)
+      } else {
+        animations.current.delete(key)
+      }
+      positions.current.set(key, target)
+    }
+  }, [state])
+
+  useEffect(() => {
+    const current = animations.current
+    return () => { for (const animation of current.values()) animation.cancel() }
+  }, [])
+
   const constraint = state === "original"
     ? { row: "bg-amber-50", label: "text-amber-800", pill: "bg-amber-100 text-amber-900" }
     : { row: "bg-violet-50", label: "text-violet-700", pill: "bg-violet-100 text-violet-800" }
-  return <Card className="gap-0 p-4 shadow-none">
+  return <Card ref={cardRef} className="@container gap-0 p-4 shadow-none">
     <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
       <div><p className="text-xs text-slate-500">Technician 4 · Afternoon visits</p><h2 className="mt-1 text-base font-semibold text-slate-800">{state === "original" ? "Tentative route" : state === "exception" ? "Updated tentative route" : "Optimised route"}</h2></div>
       <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">{live ? "Confirmed" : "Tentative"}</span>
     </div>
     <div className="grid grid-cols-[4rem_minmax(0,1fr)_3rem] sm:grid-cols-[4.5rem_minmax(0,1fr)_4rem] gap-2 px-2 text-xs text-slate-500" aria-hidden="true"><span>Time</span><span>Apartment</span><span className="text-right">Floor</span></div>
     <div role="list" aria-label="Technician 4 afternoon route" className="relative mt-2 h-[32rem]">
-      {stops.map((stop, index) => <div key={stop.unit} role="listitem" data-unit={stop.unit} data-time={stop.time} className={`oct-route-row absolute inset-x-0 top-0 grid h-16 grid-cols-[4rem_minmax(0,1fr)_3rem] sm:grid-cols-[4.5rem_minmax(0,1fr)_4rem] items-center gap-2 rounded-lg px-2 ${stop.amar ? `z-10 ${constraint.row}` : "bg-white"}`} style={{ transform: `translateY(${index * 100}%)` }}>
-        <span className="text-xs tabular-nums text-slate-600">{stop.time}</span>
+      <div aria-hidden="true" data-route-times className="pointer-events-none absolute inset-0 z-20">
+        {stops.map(stop => <div key={stop.time} className="flex h-16 items-center px-2"><span className="text-xs tabular-nums text-slate-600">{stop.time}</span></div>)}
+      </div>
+      {stops.map((stop, index) => <div key={stop.unit} role="listitem" data-route-position={`visit-${stop.unit}`} data-unit={stop.unit} data-time={stop.time} className={`oct-route-row absolute inset-x-0 top-0 grid h-16 grid-cols-[4rem_minmax(0,1fr)_3rem] sm:grid-cols-[4.5rem_minmax(0,1fr)_4rem] items-center gap-2 rounded-lg px-2 ${stop.amar ? `z-10 ${constraint.row}` : "bg-white"}`} style={{ transform: `translate3d(0, ${index * 100}%, 0)` }}>
+        <span className="text-xs tabular-nums text-slate-600 opacity-0">{stop.time}</span>
         <div className="min-w-0"><p className="text-sm font-semibold text-slate-700">Unit {stop.unit}{stop.amar && " · Amar"}</p>{stop.amar && <p className={`mt-1 text-[11px] leading-4 ${constraint.label}`}>{state === "original" ? "Resident constraint" : "Pinned · Resident constraint"}</p>}</div>
         <span className={`justify-self-end rounded-full px-2 py-1 text-[11px] font-medium ${stop.amar ? constraint.pill : "bg-slate-100 text-slate-700"}`}>Floor {stop.floor}</span>
       </div>)}
     </div>
-    <div data-floor-sequence className="mt-3 flex min-w-0 items-center gap-3 border-t border-slate-100 pt-3">
+    <div data-floor-sequence className="mt-3 flex min-w-0 flex-col items-start gap-3 border-t border-slate-100 pt-3 @min-[360px]:flex-row @min-[360px]:items-center">
       <span className="shrink-0 whitespace-nowrap text-[11px] leading-5 text-slate-600">Floor sequence</span>
-      <div role="group" aria-label="Floor sequence timeline" tabIndex={0} className="min-w-0 overflow-x-auto rounded pb-1 [scrollbar-width:thin] focus-visible:outline-2 focus-visible:outline-violet-600">
-        <ol aria-label="Floors in visit order" className="relative flex w-max items-center gap-[16px] before:absolute before:inset-x-2 before:top-1/2 before:h-px before:bg-slate-200">
-          {stops.map((stop, index) => <li key={stop.unit} data-floor={stop.floor} aria-label={`Stop ${index + 1}: Unit ${stop.unit}, Floor ${stop.floor}`} className="relative flex justify-center">
-            <span className={`flex size-4 items-center justify-center rounded-full text-[11px] font-semibold ${stop.amar ? constraint.pill : "bg-slate-100 text-slate-700"}`}>{stop.floor}</span>
+      <div role="group" aria-label="Floor sequence timeline" className="rounded pb-1">
+        <ol aria-label="Floors in visit order" style={{ width: `${stops.length * 32 - 16}px` }} className="relative flex h-4 shrink-0 items-center gap-[16px] before:absolute before:inset-x-2 before:top-1/2 before:h-px before:bg-slate-200">
+          {stops.map((stop, index) => <li key={stop.unit} data-route-position={`floor-${stop.unit}`} data-floor={stop.floor} aria-label={`Stop ${index + 1}: Unit ${stop.unit}, Floor ${stop.floor}`} className="oct-floor-stop absolute left-0 top-0 flex size-4 justify-center" style={{ transform: `translate3d(${index * 200}%, 0, 0)` }}>
+            <span data-resident-marker={stop.amar ? true : undefined} className={`flex size-4 items-center justify-center rounded-full text-[11px] font-semibold ${stop.amar ? constraint.pill : "bg-slate-100 text-slate-700"}`}>{stop.floor}</span>
           </li>)}
         </ol>
       </div>

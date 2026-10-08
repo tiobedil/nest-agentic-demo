@@ -64,7 +64,7 @@ const assert = require('node:assert/strict');
       }
       if (skeletonDimensions) assert.deepEqual(await reply.locator('[data-slot="card"]').evaluateAll(cards => cards.map(card => ({ width: card.getBoundingClientRect().width, height: card.getBoundingClientRect().height }))), skeletonDimensions);
     };
-    const inactive = async reply => assert.equal(await reply.locator('button').evaluateAll(buttons => buttons.every(button => button.disabled)), true);
+    const inactive = async reply => assert.equal(await reply.locator('button:not([data-schedule-review])').evaluateAll(buttons => buttons.every(button => button.disabled)), true);
     const dimensions = reply => reply.locator('[data-slot="card"]').evaluateAll(cards => cards.map(card => ({ width: card.getBoundingClientRect().width, height: card.getBoundingClientRect().height })));
 
     await page.goto(`${base}/oct-demo`);
@@ -160,6 +160,34 @@ const assert = require('node:assert/strict');
     assert.ok((await routing.locator('[data-unit="605"]').getAttribute('class')).includes('bg-violet-50'));
     assert.equal(await routing.locator('[data-floor-sequence] li > span.bg-violet-100').count(), 1);
     assert.equal(await routing.locator('[data-floor-sequence] li > span.bg-amber-100').count(), 0);
+    const motion = await routing.evaluate(async reply => {
+      const row = reply.querySelector('[data-unit="605"]');
+      const marker = reply.querySelector('[data-floor][aria-label*="Unit 605,"]');
+      const times = reply.querySelector('[data-route-times]');
+      const samples = [];
+      const timing = row.getAnimations()[0]?.effect.getTiming();
+      const start = performance.now();
+      await new Promise(resolve => {
+        const sample = () => {
+          samples.push({
+            y: new DOMMatrix(getComputedStyle(row).transform).m42,
+            x: new DOMMatrix(getComputedStyle(marker).transform).m41,
+            times: [...times.children].map(slot => slot.offsetTop),
+          });
+          if (performance.now() - start >= 1200) resolve();
+          else requestAnimationFrame(sample);
+        };
+        requestAnimationFrame(sample);
+      });
+      return { samples, duration: timing?.duration, easing: timing?.easing };
+    });
+    assert.equal(motion.duration, 1200);
+    assert.equal(motion.easing, 'cubic-bezier(0.77, 0, 0.175, 1)');
+    assert.ok(new Set(motion.samples.map(sample => Math.round(sample.y))).size > 15, 'The appointment must visibly pass through intermediate positions');
+    assert.ok(motion.samples.some(sample => sample.y > 140 && sample.y < 430));
+    assert.ok(motion.samples.every((sample, index) => !index || sample.y >= motion.samples[index - 1].y - 0.01));
+    assert.ok(motion.samples.every(sample => Math.abs(sample.y - sample.x * 2) < 0.1), 'The floor marker must move in sync with its appointment');
+    assert.ok(motion.samples.every(sample => JSON.stringify(sample.times) === JSON.stringify(motion.samples[0].times)), 'Clock slots must stay stationary');
     assert.deepEqual(await routing.locator('[data-floor]').evaluateAll(stops => stops.map(stop => Number(stop.dataset.floor))), [6, 6, 2, 6, 2, 2, 2, 6]);
     await routing.locator('[data-unit="202"][data-time="4:00 PM"]').waitFor();
     assert.equal(await amarNode.evaluate(element => element.isConnected && element.dataset.time === '5:45 PM'), true);
@@ -212,6 +240,17 @@ const assert = require('node:assert/strict');
     const nextPlan = page.locator('[data-assistant-message="9"]');
     await ready(nextPlan);
     await inactive(result);
+    const historicalSchedule = review.locator('[data-schedule-review]');
+    assert.equal(await historicalSchedule.isEnabled(), true);
+    await historicalSchedule.click();
+    assert.equal(await historicalSchedule.textContent(), 'Review full schedule');
+    await historicalSchedule.click();
+    assert.equal(await review.locator('tbody tr').count(), 116);
+    assert.equal(await review.getByRole('button', { name: 'Confirm & notify residents' }).isDisabled(), true);
+    const historicalDisclosure = review.locator('summary').first();
+    const previouslyOpen = await historicalDisclosure.evaluate(summary => summary.parentElement.open);
+    await historicalDisclosure.click();
+    assert.equal(await historicalDisclosure.evaluate(summary => summary.parentElement.open), !previouslyOpen);
     assert.equal(await page.getByText('116 / 116 apartments scheduled', { exact: true }).count(), 1);
     assert.equal(await page.getByText('another request', { exact: true }).count(), 1);
     await nextPlan.getByRole('radio', { name: /Keep standard slot/ }).check();
@@ -255,6 +294,14 @@ const assert = require('node:assert/strict');
     const mobilePlan = mobile.locator('[data-assistant-message="2"]');
     await ready(mobilePlan);
     assert.equal(await mobilePlan.locator('[data-floor-sequence] ol').evaluate(element => getComputedStyle(element).columnGap), '16px');
+    assert.equal(await mobilePlan.locator('[data-floor-sequence]').evaluate(sequence => {
+      const bounds = sequence.getBoundingClientRect();
+      const timeline = sequence.querySelector('[role="group"]');
+      return timeline.scrollWidth === timeline.clientWidth && getComputedStyle(timeline).overflowX === 'visible' && [...sequence.querySelectorAll('[data-floor]')].every(marker => {
+        const floor = marker.getBoundingClientRect();
+        return floor.left >= bounds.left - 1 && floor.right <= bounds.right + 1;
+      });
+    }), true, 'All eight floors must fit without scrolling');
     assert.equal(await mobilePlan.locator('[data-floor]').evaluateAll(stops => new Set(stops.map(stop => Math.round(stop.getBoundingClientRect().top))).size), 1);
     const overflow = await mobile.evaluate(() => [...document.querySelectorAll('.oct-demo, .oct-demo *')].filter(element => element.scrollWidth > element.clientWidth + 1 && getComputedStyle(element).overflowX === 'visible').map(element => element.tagName));
     assert.deepEqual(overflow, []);
@@ -266,8 +313,17 @@ const assert = require('node:assert/strict');
     assert.equal(await mobileRoute.locator('[data-slot="card"]').count(), 0);
     await mobileRoute.locator(':scope[data-mode="route-original"]').waitFor();
     assert.equal(await mobileRoute.locator('[data-unit="605"]').evaluate(element => getComputedStyle(element).transitionDuration), '0s');
+    await mobileRoute.locator('[data-unit="605"][data-time="5:45 PM"]').waitFor();
+    assert.equal(await mobileRoute.locator('[data-route-position]').evaluateAll(elements => elements.every(element => element.getAnimations().length === 0)), true);
     const mobileReview = mobile.locator('[data-assistant-message="5"]');
     await ready(mobileReview);
+    const amarMarker = mobileRoute.locator('[data-resident-marker]');
+    assert.ok((await amarMarker.getAttribute('class')).includes('bg-violet-100'));
+    assert.equal(await amarMarker.evaluate(marker => {
+      const viewport = marker.closest('[role="group"]').getBoundingClientRect();
+      const bounds = marker.getBoundingClientRect();
+      return bounds.left >= viewport.left - 1 && bounds.right <= viewport.right + 1;
+    }), true, 'Amar’s purple floor marker must remain visible on a narrow timeline');
     const mobileAxe = await new AxeBuilder({ page: mobile }).include('.oct-demo').analyze();
     assert.deepEqual(mobileAxe.violations, []);
     assert.deepEqual(errors, []);

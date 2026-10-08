@@ -56,7 +56,7 @@ function AssistantReply({ message, active, onReady, onDecision, onReview }: {
 
   useEffect(() => {
     if (!active) return
-    const delay = mode === "route-original" ? 850 : mode === "route-applied" ? 1800 : mode === "loading" || mode === "route-settling" ? 700 : mode === "route-done" ? 1600 : null
+    const delay = mode === "route-original" ? 850 : mode === "route-applied" ? 1800 : mode === "route-settling" ? 1400 : mode === "loading" ? 700 : mode === "route-done" ? 1600 : null
     if (delay === null) return
     const timer = window.setTimeout(() => {
       if (mode === "route-original") { setRouteState("exception"); setMode("route-applied") }
@@ -94,8 +94,8 @@ function AssistantReply({ message, active, onReady, onDecision, onReview }: {
   const reviewCards = <>
     <PlanSummary approved adjusted={adjusted} routesOptimised onReview={reviewResident} disabled={disabled} />
     <ResidentAdjustment adjusted={adjusted} />
-    <InspectionAction variant="outline" disabled={disabled} aria-expanded={showFullSchedule} aria-controls={scheduleId} onClick={() => setShowFullSchedule(value => !value)}>{showFullSchedule ? "Hide full schedule" : "Review full schedule"}</InspectionAction>
-    {showFullSchedule && <FullSchedule state={adjusted ? "optimised" : "original"} scheduleId={scheduleId} disabled={disabled} />}
+    <InspectionAction data-schedule-review variant="outline" disabled={mode !== "ready"} aria-expanded={showFullSchedule} aria-controls={scheduleId} onClick={() => setShowFullSchedule(value => !value)}>{showFullSchedule ? "Hide full schedule" : "Review full schedule"}</InspectionAction>
+    {showFullSchedule && <FullSchedule state={adjusted ? "optimised" : "original"} scheduleId={scheduleId} disabled={mode !== "ready"} />}
     <InspectionAction disabled={disabled} onClick={() => onDecision(id, "confirm", adjusted)}>Confirm &amp; notify residents<ArrowRight aria-hidden="true" className="size-4" /></InspectionAction>
     <p className="text-center text-xs leading-5 text-slate-500">The plan remains tentative until you confirm. No residents have been notified.</p>
   </>
