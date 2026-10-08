@@ -15,29 +15,31 @@ function LoaderGrid() {
   )
 }
 
-export function Processing({ onDone, done: forcedDone, title, hideSteps, stages = STAGES, doneTitle }: { onDone?: () => void; done?: boolean; title?: string; hideSteps?: boolean; stages?: number[]; doneTitle?: string }) {
+export function Processing({ onDone, done: forcedDone, title, hideSteps, stages = STAGES, doneTitle, steps = rows, completed, disabled = false }: { onDone?: () => void; done?: boolean; title?: string; hideSteps?: boolean; stages?: number[]; doneTitle?: string; steps?: string[]; completed?: number; disabled?: boolean }) {
   const [stage, setStage] = useState(0)
-  const working = forcedDone ? false : stage < stages.length
+  const controlled = completed !== undefined
+  const activeStage = completed ?? stage
+  const working = !forcedDone && activeStage < (controlled ? steps.length : stages.length)
   const [open, setOpen] = useState(!forcedDone)
   useEffect(() => { setOpen(!forcedDone ? true : false) }, [forcedDone])
   useEffect(() => {
-    if (forcedDone) return
+    if (forcedDone || controlled) return
     if (stage >= stages.length) { onDone?.(); return }
     const t = setTimeout(() => setStage(s => s + 1), stages[stage])
     return () => clearTimeout(t)
-  }, [stage, onDone, forcedDone, stages])
+  }, [stage, onDone, forcedDone, stages, controlled])
   return (
-    <div className="w-full">
-      <button onClick={() => setOpen(v => !v)} className="flex w-fit items-center gap-2 text-left pl-[1px]">
+    <div className="w-full font-sans" data-thinking data-thinking-progress={forcedDone ? steps.length : activeStage} data-thinking-total={steps.length}>
+      <button type="button" disabled={disabled} aria-expanded={!hideSteps && open} onClick={() => setOpen(v => !v)} className="flex w-fit items-center gap-2 rounded text-left pl-[1px] focus-visible:outline-2 focus-visible:outline-violet-600">
         <span className="flex size-[13px] shrink-0 items-center justify-center">{working ? <LoaderGrid /> : <Sparkle className="size-3 text-muted-foreground/60" fill="none" />}</span>
         <span className={working ? "bg-clip-text text-[12px] font-medium text-transparent" : "text-[12px] font-normal text-muted-foreground"} style={working ? { backgroundImage: "linear-gradient(90deg, color-mix(in oklab, var(--muted-foreground) 35%, transparent) 35%, var(--muted-foreground) 50%, color-mix(in oklab, var(--muted-foreground) 35%, transparent) 65%)", backgroundSize: "200% 100%", animation: "shimmer-text 1.4s linear infinite" } : undefined}>{working ? (title ?? "Processing") : (doneTitle ?? title ?? "Processed for 5 seconds")}</span>
         {!hideSteps && <ChevronDown className={`size-4 text-muted-foreground/60 transition ${open ? "rotate-180" : ""}`} />}
       </button>
       {!hideSteps && open && (
         <div className="relative mt-2 ml-[7px] border-l border-border/20 pl-5 flex flex-col gap-2 py-1">
-          {rows.slice(0, forcedDone ? rows.length : Math.min(stage + 1, rows.length)).map((r, i) => (
-            <div key={r} className="flex items-center gap-2 text-xs leading-none text-muted-foreground/70">
-              <span className="flex size-3 shrink-0 items-center justify-center">{(forcedDone || i < stage) ? <Check className="size-3 text-muted-foreground/60" /> : <LoaderCircle className="size-3 animate-spin text-muted-foreground/60" />}</span>
+          {steps.slice(0, forcedDone ? steps.length : Math.min(activeStage + 1, steps.length)).map((r, i) => (
+            <div key={r} data-thinking-step={i} data-thinking-state={forcedDone || i < activeStage ? "complete" : "current"} className="flex items-center gap-2 text-xs leading-none text-muted-foreground/70">
+              <span className="flex size-3 shrink-0 items-center justify-center">{(forcedDone || i < activeStage) ? <Check aria-label="Completed" className="size-3 text-muted-foreground/60" /> : <LoaderCircle aria-label="In progress" className="size-3 motion-safe:animate-spin text-muted-foreground/60" />}</span>
               {r}
             </div>
           ))}

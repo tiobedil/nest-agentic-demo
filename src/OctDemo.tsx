@@ -99,7 +99,7 @@ function AssistantReply({ message, active, confirmed, thinkBeforeReply = false, 
   const traceTitle = phase === "planning" ? "Planning Lana Tower inspections" : phase === "routing" ? "Automatically optimising technician route" : phase === "review" ? "Preparing inspection plan" : "Confirming and notifying residents"
   const showTrace = mode !== "intro"
 
-  return <div data-assistant-message={id} data-phase={phase} data-mode={mode} className="flex flex-col gap-4">
+  return <div data-assistant-message={id} data-phase={phase} data-mode={mode} className="flex flex-col gap-3">
     {thinkBeforeReply && <Processing done={thought} onDone={finishThinking} title="Thinking" doneTitle="Thought for 1 second" hideSteps stages={[1500]} />}
     {thought && <StreamingText text={intro} speed={100} onDone={introDone} autoScroll={false} />}
     {showTrace && <Thinking title={traceTitle} steps={steps} completed={traceProgress} done={traceProgress === steps.length && mode !== "processing"}  />}

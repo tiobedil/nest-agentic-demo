@@ -1,6 +1,6 @@
-import { useCallback, useLayoutEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { PromptBar } from "@/components/chat/PromptBar"
-import { Processing } from "@/components/chat/Processing"
+import { Thinking } from "@/components/chat/Thinking"
 import { StreamingText } from "@/components/chat/StreamingText"
 import { OctDemo } from "@/OctDemo"
 import { PgAgent2 } from "@/PgAgent2"
@@ -8,6 +8,32 @@ import { detectUnifiedFlow } from "@/lib/unified-flow"
 import type { UnifiedFlow } from "@/lib/unified-flow"
 
 type Entry = { id: number; prompt: string; flow: UnifiedFlow | null }
+
+const unsupportedSteps = ["Reviewing your request…", "Checking available workflows…", "Looking for a supported action…"]
+const unsupportedReplyLines = ["I couldn't find an available workflow for that request.", "Could you rephrase what you'd like me to do?"]
+
+function UnsupportedReply({ onDone }: { onDone: () => void }) {
+  const [progress, setProgress] = useState(0)
+  const [thought, setThought] = useState(false)
+  const [firstLineDone, setFirstLineDone] = useState(false)
+  const finishFirstLine = useCallback(() => setFirstLineDone(true), [])
+
+  useEffect(() => {
+    const timers = unsupportedSteps.map((_, index) => window.setTimeout(() => {
+      setProgress(index + 1)
+      if (index === unsupportedSteps.length - 1) setThought(true)
+    }, (index + 1) * 1100))
+    return () => timers.forEach(window.clearTimeout)
+  }, [])
+
+  return <div className="flex flex-col gap-3">
+    <Thinking title="Thinking" steps={unsupportedSteps} completed={progress} done={thought} />
+    {thought && <div>
+      <StreamingText text={unsupportedReplyLines[0]} speed={100} autoScroll={false} onDone={finishFirstLine} />
+      {firstLineDone && <StreamingText text={unsupportedReplyLines[1]} speed={100} autoScroll={false} onDone={onDone} />}
+    </div>}
+  </div>
+}
 
 function FlowEntry({ entry, panelContainer, active, onBusyChange, onPanelOpenChange }: {
   entry: Entry
@@ -18,17 +44,12 @@ function FlowEntry({ entry, panelContainer, active, onBusyChange, onPanelOpenCha
 }) {
   const reportBusy = useCallback((busy: boolean) => onBusyChange(entry.id, busy), [entry.id, onBusyChange])
   const reportPanel = useCallback((open: boolean) => onPanelOpenChange(entry.id, open), [entry.id, onPanelOpenChange])
-  const [thought, setThought] = useState(false)
-  const finishThinking = useCallback(() => setThought(true), [])
   const finishReply = useCallback(() => reportBusy(false), [reportBusy])
   if (entry.flow === "extension") return <PgAgent2 embedded initialPrompt={entry.prompt} onBusyChange={reportBusy} />
   if (entry.flow === "inspection") return <OctDemo embedded initialPrompt={entry.prompt} onBusyChange={reportBusy} onPanelOpenChange={reportPanel} panelContainer={panelContainer} showPanel={active} scheduleId={`building-schedule-${entry.id}`} />
   return <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 text-sm">
     <div className="max-w-[78%] self-end rounded-2xl rounded-br-[6px] bg-violet-100 px-4 py-2.5 text-violet-950">{entry.prompt}</div>
-    <div className="flex flex-col gap-3">
-      <Processing done={thought} onDone={finishThinking} title="Thinking" doneTitle="Thought for 1 second" hideSteps stages={[1500]} />
-      {thought && <StreamingText text="Hello there! How can I help you today?" speed={100} autoScroll={false} onDone={finishReply} />}
-    </div>
+    <UnsupportedReply onDone={finishReply} />
   </div>
 }
 
