@@ -18,6 +18,9 @@ export function LoadingSurface({ children, label }: { children: ReactNode; label
 
 export function RouteCard({ state, live }: { state: RouteState; live: boolean }) {
   const stops = routeFor[state]
+  const constraint = state === "original"
+    ? { row: "bg-amber-50", label: "text-amber-800", pill: "bg-amber-100 text-amber-900" }
+    : { row: "bg-violet-50", label: "text-violet-700", pill: "bg-violet-100 text-violet-800" }
   return <Card className="gap-0 p-4 shadow-none">
     <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
       <div><p className="text-xs text-slate-500">Technician 4 · Afternoon visits</p><h2 className="mt-1 text-base font-semibold text-slate-800">{state === "original" ? "Tentative route" : state === "exception" ? "Updated tentative route" : "Optimised route"}</h2></div>
@@ -25,10 +28,10 @@ export function RouteCard({ state, live }: { state: RouteState; live: boolean })
     </div>
     <div className="grid grid-cols-[4rem_minmax(0,1fr)_3rem] sm:grid-cols-[4.5rem_minmax(0,1fr)_4rem] gap-2 px-2 text-xs text-slate-500" aria-hidden="true"><span>Time</span><span>Apartment</span><span className="text-right">Floor</span></div>
     <div role="list" aria-label="Technician 4 afternoon route" className="relative mt-2 h-[32rem]">
-      {stops.map((stop, index) => <div key={stop.unit} role="listitem" data-unit={stop.unit} data-time={stop.time} className={`oct-route-row absolute inset-x-0 top-0 grid h-16 grid-cols-[4rem_minmax(0,1fr)_3rem] sm:grid-cols-[4.5rem_minmax(0,1fr)_4rem] items-center gap-2 rounded-lg px-2 ${stop.amar ? "z-10 bg-violet-50" : "bg-white"}`} style={{ transform: `translateY(${index * 100}%)` }}>
+      {stops.map((stop, index) => <div key={stop.unit} role="listitem" data-unit={stop.unit} data-time={stop.time} className={`oct-route-row absolute inset-x-0 top-0 grid h-16 grid-cols-[4rem_minmax(0,1fr)_3rem] sm:grid-cols-[4.5rem_minmax(0,1fr)_4rem] items-center gap-2 rounded-lg px-2 ${stop.amar ? `z-10 ${constraint.row}` : "bg-white"}`} style={{ transform: `translateY(${index * 100}%)` }}>
         <span className="text-xs tabular-nums text-slate-600">{stop.time}</span>
-        <div className="min-w-0"><p className="text-sm font-semibold text-slate-700">Unit {stop.unit}{stop.amar && " · Amar"}</p>{stop.amar && <p className="mt-1 text-[11px] leading-4 text-violet-700">{state === "original" ? "Resident constraint" : "Pinned · Resident constraint"}</p>}</div>
-        <span className={`justify-self-end rounded-full px-2 py-1 text-[11px] font-medium ${stop.amar ? "bg-violet-100 text-violet-800" : "bg-slate-100 text-slate-700"}`}>Floor {stop.floor}</span>
+        <div className="min-w-0"><p className="text-sm font-semibold text-slate-700">Unit {stop.unit}{stop.amar && " · Amar"}</p>{stop.amar && <p className={`mt-1 text-[11px] leading-4 ${constraint.label}`}>{state === "original" ? "Resident constraint" : "Pinned · Resident constraint"}</p>}</div>
+        <span className={`justify-self-end rounded-full px-2 py-1 text-[11px] font-medium ${stop.amar ? constraint.pill : "bg-slate-100 text-slate-700"}`}>Floor {stop.floor}</span>
       </div>)}
     </div>
     <div data-floor-sequence className="mt-3 flex min-w-0 items-center gap-3 border-t border-slate-100 pt-3">
@@ -36,7 +39,7 @@ export function RouteCard({ state, live }: { state: RouteState; live: boolean })
       <div role="group" aria-label="Floor sequence timeline" tabIndex={0} className="min-w-0 overflow-x-auto rounded pb-1 [scrollbar-width:thin] focus-visible:outline-2 focus-visible:outline-violet-600">
         <ol aria-label="Floors in visit order" className="relative flex w-max items-center gap-[16px] before:absolute before:inset-x-2 before:top-1/2 before:h-px before:bg-slate-200">
           {stops.map((stop, index) => <li key={stop.unit} data-floor={stop.floor} aria-label={`Stop ${index + 1}: Unit ${stop.unit}, Floor ${stop.floor}`} className="relative flex justify-center">
-            <span className={`flex size-4 items-center justify-center rounded-full text-[11px] font-semibold ${stop.amar ? "bg-violet-100 text-violet-800" : "bg-slate-100 text-slate-700"}`}>{stop.floor}</span>
+            <span className={`flex size-4 items-center justify-center rounded-full text-[11px] font-semibold ${stop.amar ? constraint.pill : "bg-slate-100 text-slate-700"}`}>{stop.floor}</span>
           </li>)}
         </ol>
       </div>
@@ -80,7 +83,7 @@ export function FullSchedule({ state, scheduleId, disabled = false }: { state: R
 
 export function ResidentAdjustment({ adjusted }: { adjusted: boolean }) {
   return <Card className="gap-3 p-4 shadow-none">
-    <div><h2 className="text-sm font-semibold text-slate-800">Amar Sundaran · Unit 605</h2><p className="mt-1 text-sm text-violet-800">{adjusted ? "5:45 PM" : "4:30 PM"} · Resident-present access</p></div>
+    <div><h2 className="text-sm font-semibold text-slate-800">Amar Sundaran · Unit 605</h2><p className={`mt-1 text-sm ${adjusted ? "text-violet-800" : "text-amber-800"}`}>{adjusted ? "5:45 PM" : "4:30 PM"} · Resident-present access</p></div>
     {!adjusted && <p className="rounded-lg bg-amber-50 p-3 text-xs leading-5 text-amber-900">Standard slot retained. Higher failed-access risk acknowledged; no resident-specific time adjustment was made.</p>}
     <p className="text-sm leading-6 text-slate-600">No appointments have been communicated yet.</p>
   </Card>

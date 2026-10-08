@@ -9,13 +9,13 @@ The user's refinements take precedence:
 - Identical opening copy and shared PromptBar; any non-empty prompt starts the fixed scenario.
 - All operation content appears in assistant messages.
 - No additional prompt focus ring, Thinking container, restart button, or redundant working footer.
-- Reply text streams before Thinking. Each action trace ends with `Generating UI`. Skeletons appear only after every action has completed.
+- Reply text streams before Thinking. Reveal completed actions and the current action only; never preview future steps. Planning, route optimisation, and approval review end with `Generating UI`; final execution ends with `Sending resident notifications` and has no `Generating UI` step. Skeletons and cards appear only after every action has completed.
 - Main actions use the Extension Demo dimensions: full width, 40 px height, 16 px semibold text.
 - Prompts and appointment/confirmation decisions append messages instead of replacing existing replies. Previous message actions are disabled.
 - Skeletons render the actual card components with masking, not separately maintained placeholder layouts. UI changes therefore update their loading layouts automatically.
-- Floor timelines use a fixed 16 px gap, no outer line segments, no arrow, and horizontal scrolling instead of wrapping on narrow screens. All floor markers are neutral except Amar’s brand-colored marker.
+- Floor timelines use a fixed 16 px gap, no outer line segments, no arrow, and horizontal scrolling instead of wrapping on narrow screens. All floor markers are neutral except Amar’s constraint marker: yellow at the unchanged 4:30 PM appointment and purple after moving to 5:45 PM.
 - Route completion uses a light-green banner with vertically centered icon and text. The final result has no status pill and uses plain check icons for its six outcome rows.
-- Automatically follow a newly arriving reply while it is generating. Stop following when that reply becomes interactive, and focus the resident review card after the initial plan loads. Radio changes and disclosure controls never trigger bottom scrolling.
+- Automatically follow a newly arriving reply while it is generating. Stop following when that reply becomes interactive. Initial card order is Tower C summary, Technician 4 route, then Requires review; focus the Tower C summary after loading. Radio changes and disclosure controls never trigger bottom scrolling.
 - Use product language in the interface, navigation, page title, and result copy. Keep implementation and fixture limitations documented here rather than in user-facing labels.
 
 ## Scenario coverage
@@ -53,11 +53,11 @@ Passed:
 - `npm run build`.
 - `npm run lint`: existing project warnings remain; no errors.
 - `node --test tests/inspection-plan.test.ts`: four tests cover exact routes, the minimal exchange, Amar's fixed constraint, and 116 unique apartments across six conflict-free schedules.
-- Browser checks: arbitrary prompts, matching opening geometry, no added prompt outline, streaming before Thinking, final `Generating UI` action, no skeleton before all thinking actions complete in every tested planning/review/execution message, identical skeleton/real card dimensions across those phases, and bare Thinking.
+- Browser checks: arbitrary prompts, matching opening geometry, no added prompt outline, streaming before Thinking, no preview of future actions at any observed Thinking progress, bare Thinking, and no `Generating UI` action in final execution. Skeletons wait until all phase actions complete, and their dimensions match the real cards.
 - Browser checks: full-width 40 px actions, append-only decision messages, preservation of old card content, disabled old controls, persistent Amar row during automatic optimisation, six-technician full schedule, and both appointment branches.
 - Browser checks: a new arbitrary prompt disables a still-pending appointment button; dispatching a stale button event does not create another message.
-- Browser checks: matching neutral floor styles for Units 602–604 and 202–205, brand treatment only for Amar, exact 16 px timeline gap, and no exterior line segments or arrow.
-- Browser checks: centered green success banner, no final status pill, plain check icons, incoming-message following during Thinking/loading, resident-card focus, and unchanged scroll position after radio selection, schedule review, or disclosure expansion.
+- Browser checks: matching neutral floor styles for Units 602–604 and 202–205, yellow Amar row/pill/marker while at 4:30 PM, purple after moving to 5:45 PM, exact 16 px timeline gap, and no exterior line segments or arrow.
+- Browser checks: centered green success banner, no final status pill, plain check icons, incoming-message following during Thinking/loading, the summary → route → resident review card order, summary-card focus, and unchanged scroll position after radio selection, schedule review, or disclosure expansion.
 - Browser checks: operational navigation and browser title, no user-facing occurrence of the removed presentation label, and compatibility redirect to `/inspection-planning`.
 - Browser checks at 320 px with reduced motion: no page content overflow, a single-row horizontally scrollable timeline, no overflowing resident-row text, zero route transition duration, and no automated accessibility violations in the tested conversation area.
 

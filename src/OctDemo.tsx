@@ -14,7 +14,7 @@ type Decision = "recommended" | "standard" | "confirm"
 
 const planSteps = ["Checking inspection scope…", "Assigning technicians…", "Building tentative schedules…", "Checking resident access history…", "Generating UI"]
 const optimiseSteps = ["Locking Amar’s 5:45 PM access window…", "Checking remaining resident constraints…", "Regrouping inspections by floor…", "Optimising technician route…", "Generating UI"]
-const executeSteps = ["Publishing technician schedules…", "Confirming appointment windows…", "Applying resident access requirements…", "Updating building operations…", "Sending resident notifications…", "Generating UI"]
+const executeSteps = ["Publishing technician schedules…", "Confirming appointment windows…", "Applying resident access requirements…", "Updating building operations…", "Sending resident notifications…"]
 const reviewSteps = ["Generating UI"]
 const openingText = "I’ll schedule the annual in-unit fire-safety inspections for all 116 apartments in Tower C on Tuesday, 13 October, and check resident access history before confirming the plan."
 const routeCompletionText = "Amar’s 5:45 PM access window is preserved, while the remaining inspections have been regrouped into continuous floor blocks."
@@ -32,6 +32,7 @@ function AssistantReply({ message, active, onReady, onDecision, onReview }: {
   const [routeState, setRouteState] = useState<RouteState>("original")
   const [showFullSchedule, setShowFullSchedule] = useState(false)
   const residentRef = useRef<HTMLDivElement>(null)
+  const summaryRef = useRef<HTMLDivElement>(null)
   const scheduleId = `building-schedule-${id}`
   const steps = phase === "planning" ? planSteps : phase === "routing" ? optimiseSteps : phase === "review" ? reviewSteps : executeSteps
   const loading = mode === "loading" && traceProgress === steps.length
@@ -71,8 +72,8 @@ function AssistantReply({ message, active, onReady, onDecision, onReview }: {
     if (!active || mode !== "ready") return
     onReady(id)
     if (phase === "planning") {
-      residentRef.current?.scrollIntoView({ block: "start", behavior: "auto" })
-      residentRef.current?.focus({ preventScroll: true })
+      summaryRef.current?.scrollIntoView({ block: "start", behavior: "auto" })
+      summaryRef.current?.focus({ preventScroll: true })
     }
   }, [active, mode, id, onReady, phase])
 
@@ -82,11 +83,13 @@ function AssistantReply({ message, active, onReady, onDecision, onReview }: {
     residentRef.current?.focus({ preventScroll: true })
   }
   const planningCards = <>
-    <PlanSummary approved={false} adjusted={false} routesOptimised={false} onReview={reviewResident} disabled={disabled} />
-    <div ref={mode === "ready" ? residentRef : undefined} tabIndex={mode === "ready" && active ? -1 : undefined} className="rounded-lg focus-visible:outline-2 focus-visible:outline-violet-600">
-      <ResidentCard disabled={disabled} onApply={() => onDecision(id, "recommended", true)} onKeep={() => onDecision(id, "standard", false)} />
+    <div data-plan-summary ref={mode === "ready" ? summaryRef : undefined} tabIndex={mode === "ready" && active ? -1 : undefined} className="rounded-lg focus-visible:outline-2 focus-visible:outline-violet-600">
+      <PlanSummary approved={false} adjusted={false} routesOptimised={false} onReview={reviewResident} disabled={disabled} />
     </div>
     <RouteCard state="original" live={false} />
+    <div data-resident-review ref={mode === "ready" ? residentRef : undefined} tabIndex={mode === "ready" && active ? -1 : undefined} className="rounded-lg focus-visible:outline-2 focus-visible:outline-violet-600">
+      <ResidentCard disabled={disabled} onApply={() => onDecision(id, "recommended", true)} onKeep={() => onDecision(id, "standard", false)} />
+    </div>
   </>
   const reviewCards = <>
     <PlanSummary approved adjusted={adjusted} routesOptimised onReview={reviewResident} disabled={disabled} />

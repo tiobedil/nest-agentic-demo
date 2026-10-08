@@ -15,10 +15,27 @@ const assert = require('node:assert/strict');
       const gap = await targetPage.locator('[data-chat-scroll]').evaluate(element => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve(element.scrollHeight - element.clientHeight - element.scrollTop)))));
       assert.ok(gap <= 2, `The conversation is ${gap}px away from the bottom`);
     };
+    const watchThinking = async targetPage => {
+      await targetPage.locator('.oct-demo').waitFor();
+      await targetPage.evaluate(() => {
+        window.thinkingFailures = [];
+        const validate = () => {
+          for (const trace of document.querySelectorAll('.oct-demo [data-thinking]')) {
+            if (trace.querySelector('button')?.getAttribute('aria-expanded') !== 'true') continue;
+            const progress = Number(trace.dataset.thinkingProgress);
+            const total = Number(trace.dataset.thinkingTotal);
+            const rows = [...trace.querySelectorAll('[data-thinking-step]')];
+            const valid = rows.length === Math.min(progress + 1, total) && rows.every((row, index) => Number(row.dataset.thinkingStep) === index && row.dataset.thinkingState === (index < progress ? 'complete' : 'current'));
+            if (!valid) window.thinkingFailures.push({ progress, total, visible: rows.length });
+          }
+        };
+        new MutationObserver(validate).observe(document.querySelector('.oct-demo'), { subtree: true, childList: true, attributes: true });
+      });
+    };
     const ready = async reply => {
       await reply.waitFor();
       const phase = await reply.getAttribute('data-phase');
-      const expectedSteps = phase === 'planning' ? 5 : phase === 'review' ? 1 : 6;
+      const expectedSteps = phase === 'review' ? 1 : 5;
       let skeletonDimensions;
       if (await reply.getAttribute('data-mode') !== 'ready') {
         if (await reply.getAttribute('data-mode') !== 'loading') {
@@ -30,13 +47,20 @@ const assert = require('node:assert/strict');
         await reply.locator('[data-loading-surface]').waitFor();
         await atBottom(reply.page());
         assert.equal(await reply.locator('svg[aria-label="Completed"]').count(), expectedSteps);
-        await reply.getByText('Generating UI', { exact: true }).waitFor();
+        if (phase === 'execution') assert.equal(await reply.getByText('Generating UI', { exact: true }).count(), 0);
+        else await reply.getByText('Generating UI', { exact: true }).waitFor();
         skeletonDimensions = await reply.locator('[data-slot="card"]').evaluateAll(cards => cards.map(card => ({ width: card.getBoundingClientRect().width, height: card.getBoundingClientRect().height })));
       }
       await reply.locator(':scope[data-mode="ready"]').waitFor();
       if (phase === 'planning') {
-        const focused = await reply.locator('[tabindex="-1"]').evaluate(element => element === document.activeElement);
+        const focused = await reply.locator('[data-plan-summary]').evaluate(element => element === document.activeElement);
         assert.equal(focused, true);
+        const visible = await reply.locator('[data-plan-summary]').evaluate(element => {
+          const viewport = element.closest('[data-chat-scroll]').getBoundingClientRect();
+          const summary = element.getBoundingClientRect();
+          return summary.top >= viewport.top - 1 && summary.top < viewport.bottom;
+        });
+        assert.equal(visible, true);
       }
       if (skeletonDimensions) assert.deepEqual(await reply.locator('[data-slot="card"]').evaluateAll(cards => cards.map(card => ({ width: card.getBoundingClientRect().width, height: card.getBoundingClientRect().height }))), skeletonDimensions);
     };
@@ -45,6 +69,7 @@ const assert = require('node:assert/strict');
 
     await page.goto(`${base}/oct-demo`);
     assert.equal(await page.title(), "Nest Operations");
+    await watchThinking(page);
     assert.ok(page.url().endsWith("/inspection-planning"));
     const agentMenu = page.getByRole("button", { name: "AI Agent", exact: true });
     await agentMenu.click();
@@ -77,6 +102,7 @@ const assert = require('node:assert/strict');
     assert.equal(await initial.getByRole('heading', { name: 'Amar Sundaran', exact: true }).count(), 0);
     await ready(initial);
     assert.deepEqual(await dimensions(initial), skeletonDimensions);
+    assert.deepEqual(await initial.locator('[data-slot="card"] h2').allTextContents(), ['Tower C — Fire-safety inspections', 'Tentative route', 'Amar Sundaran']);
     assert.equal(await initial.getByRole('button', { name: 'Planning Tower C inspections' }).evaluate(element => element.parentElement.className), 'w-full');
     const timeline = initial.locator('[data-floor-sequence]');
     assert.equal(await timeline.locator('ol').evaluate(element => getComputedStyle(element).columnGap), '16px');
@@ -87,9 +113,11 @@ const assert = require('node:assert/strict');
     });
     assert.equal(endpoints.start, endpoints.radius);
     assert.equal(endpoints.end, endpoints.radius);
-    assert.equal(await timeline.locator('li > span.bg-violet-100').count(), 1);
+    assert.equal(await timeline.locator('li > span.bg-amber-100').count(), 1);
+    assert.equal(await timeline.locator('li > span.bg-violet-100').count(), 0);
+    assert.ok((await initial.locator('[data-unit="605"]').getAttribute('class')).includes('bg-amber-50'));
     assert.equal(await timeline.locator('li > span.bg-slate-100').count(), 7);
-    assert.equal(await initial.locator('.oct-route-row').evaluateAll(rows => rows.every(row => row.lastElementChild.classList.contains(row.dataset.unit === '605' ? 'bg-violet-100' : 'bg-slate-100'))), true);
+    assert.equal(await initial.locator('.oct-route-row').evaluateAll(rows => rows.every(row => row.lastElementChild.classList.contains(row.dataset.unit === '605' ? 'bg-amber-100' : 'bg-slate-100'))), true);
     const standardOption = initial.getByRole('radio', { name: /Keep standard slot/ });
     await standardOption.scrollIntoViewIfNeeded();
     const radioScroll = await page.locator('[data-chat-scroll]').evaluate(element => element.scrollTop);
@@ -125,8 +153,13 @@ const assert = require('node:assert/strict');
     await routing.locator(':scope[data-mode="route-original"]').waitFor();
     assert.deepEqual(await dimensions(routing), routeSkeleton);
     const amarNode = await routing.locator('[data-unit="605"]').elementHandle();
+    assert.ok((await routing.locator('[data-unit="605"]').getAttribute('class')).includes('bg-amber-50'));
+    assert.equal(await routing.locator('[data-floor-sequence] li > span.bg-amber-100').count(), 1);
     await routing.locator('[data-unit="605"][data-time="5:45 PM"]').waitFor();
     assert.equal(await routing.locator('[data-unit="205"]').getAttribute('data-time'), '4:30 PM');
+    assert.ok((await routing.locator('[data-unit="605"]').getAttribute('class')).includes('bg-violet-50'));
+    assert.equal(await routing.locator('[data-floor-sequence] li > span.bg-violet-100').count(), 1);
+    assert.equal(await routing.locator('[data-floor-sequence] li > span.bg-amber-100').count(), 0);
     assert.deepEqual(await routing.locator('[data-floor]').evaluateAll(stops => stops.map(stop => Number(stop.dataset.floor))), [6, 6, 2, 6, 2, 2, 2, 6]);
     await routing.locator('[data-unit="202"][data-time="4:00 PM"]').waitFor();
     assert.equal(await amarNode.evaluate(element => element.isConnected && element.dataset.time === '5:45 PM'), true);
@@ -186,6 +219,7 @@ const assert = require('node:assert/strict');
     const standardReview = page.locator('[data-assistant-message="11"]');
     await ready(standardReview);
     await standardReview.getByText('Standard slot retained. Higher failed-access risk acknowledged;', { exact: false }).waitFor();
+    assert.ok((await standardReview.getByText('4:30 PM · Resident-present access', { exact: true }).getAttribute('class')).includes('text-amber-800'));
     await standardReview.getByRole('button', { name: 'Confirm & notify residents' }).click();
     const standardResult = page.locator('[data-assistant-message="13"]');
     await ready(standardResult);
@@ -193,6 +227,7 @@ const assert = require('node:assert/strict');
     assert.equal(await page.locator('[data-assistant-message]').count(), 7);
     const followUp = await context.newPage();
     await followUp.goto(`${base}/oct-demo`);
+    await watchThinking(followUp);
     const followUpTextbox = followUp.getByRole('textbox', { name: 'Message the assistant' });
     await followUpTextbox.fill('first prompt');
     await followUpTextbox.press('Enter');
@@ -208,11 +243,12 @@ const assert = require('node:assert/strict');
     await ready(followUp.locator('[data-assistant-message="4"]'));
     assert.equal(await oldReply.getByRole('heading', { name: 'Amar Sundaran', exact: true }).count(), 1);
 
-    console.log('Desktop: UI gating, synchronized skeletons, compact 16px floor timeline, Amar-only brand pills, aligned success banner, review focus, responsive incoming-message follow, stable local controls, append-only history and both branches PASS');
+    console.log('Desktop: sequential Thinking, final execution without Generating UI, UI gating, synchronized skeletons, compact 16px floor timeline, yellow-to-purple resident constraint, reordered cards, aligned success banner, summary focus, responsive incoming-message follow, stable local controls, append-only history and both branches PASS');
 
     const mobileContext = await browser.newContext({ viewport: { width: 320, height: 740 }, reducedMotion: 'reduce' });
     const mobile = await mobileContext.newPage();
     await mobile.goto(`${base}/oct-demo`);
+    await watchThinking(mobile);
     const mobileTextbox = mobile.getByRole('textbox', { name: 'Message the assistant' });
     await mobileTextbox.fill('anything');
     await mobileTextbox.press('Enter');
@@ -235,6 +271,9 @@ const assert = require('node:assert/strict');
     const mobileAxe = await new AxeBuilder({ page: mobile }).include('.oct-demo').analyze();
     assert.deepEqual(mobileAxe.violations, []);
     assert.deepEqual(errors, []);
+    assert.deepEqual(await page.evaluate(() => window.thinkingFailures), []);
+    assert.deepEqual(await followUp.evaluate(() => window.thinkingFailures), []);
+    assert.deepEqual(await mobile.evaluate(() => window.thinkingFailures), []);
     console.log('Mobile: 320px reflow, reduced motion, append-only route and no automated accessibility violations PASS');
   } finally {
     await browser.close();
