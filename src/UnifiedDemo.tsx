@@ -80,9 +80,9 @@ export function UnifiedDemo() {
           <div className="flex w-full max-w-2xl flex-col items-center gap-8">
             <div className="space-y-4 text-center">
               <h1 className="text-[36px] font-semibold leading-none tracking-tight text-foreground/80">What would you like to get done?</h1>
-              <p className="text-sm leading-6 text-muted-foreground">Manage extension requests or plan inspections, all in one conversation.</p>
+              <p className="text-sm leading-6 text-muted-foreground">Ask me to help plan, coordinate or manage an operational task.</p>
             </div>
-            <PromptBar onSend={send} isThinking={isThinking} placeholder="Ask about an extension or inspection..." />
+            <PromptBar onSend={send} isThinking={isThinking} placeholder="Ask anything..." />
           </div>
         </div> : <div className="flex flex-col gap-8 py-8" role="log" aria-label="Unified Demo conversation">
           <h1 className="sr-only">Unified Demo</h1>
@@ -91,7 +91,7 @@ export function UnifiedDemo() {
           </div>)}
         </div>}
       </div>
-      {hasChat && <div className="flex shrink-0 justify-center px-4 pb-6"><PromptBar onSend={send} isThinking={isThinking} placeholder="Ask about an extension or inspection..." /></div>}
+      {hasChat && <div className="flex shrink-0 justify-center px-4 pb-6"><PromptBar onSend={send} isThinking={isThinking} placeholder="Ask anything..." /></div>}
     </section>
     <div ref={setPanelContainer} hidden={!panelOpen} className={panelOpen ? "min-h-0 min-w-0 max-lg:flex-1 lg:w-[42%] lg:min-w-[440px] lg:max-w-[720px] lg:shrink-0" : "hidden"} />
   </main>
