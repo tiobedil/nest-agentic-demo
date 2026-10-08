@@ -202,6 +202,10 @@ export function OctDemo() {
     {messages.length > 0 && <div className="flex shrink-0 justify-center px-4 pb-6"><PromptBar onSend={send} isThinking={isThinking} /></div>}
     </section>
     <aside aria-label="Inspection plan review" hidden={!panelOpen} className={panelOpen ? "min-h-0 min-w-0 overflow-y-auto border-t border-slate-200 bg-slate-50 p-4 max-lg:flex-1 lg:w-[34%] lg:min-w-[380px] lg:max-w-[560px] lg:shrink-0 lg:border-t-0 lg:border-l lg:p-5" : "hidden"}>
+      <header className="mb-4">
+        <h2 className="text-lg font-semibold text-slate-800">Inspection schedule</h2>
+        <p className="mt-1 text-xs leading-5 text-slate-500">Tower C · Tuesday, 13 October</p>
+      </header>
       {panel && <div className="flex min-w-0 flex-col gap-4">
         {panel.loading ? <LoadingSurface label="Loading tentative technician route"><RouteCard state={panel.state} live={panel.confirmed} /></LoadingSurface> : <RouteCard state={panel.state} live={panel.confirmed} />}
         {panel.reviewable && <>

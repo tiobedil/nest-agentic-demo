@@ -4,6 +4,7 @@ import { ArrowRight, Check, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { buildingSchedule, routeFor } from "@/lib/inspection-plan"
+import { parseCssDuration } from "@/lib/inspection-motion"
 import type { RouteState } from "@/lib/inspection-plan"
 
 export function InspectionAction({ className = "", variant = "default", ...props }: ComponentProps<typeof Button>) {
@@ -26,7 +27,7 @@ export function RouteCard({ state, live }: { state: RouteState; live: boolean })
     const card = cardRef.current
     if (!card) return
     const style = getComputedStyle(card)
-    const duration = Number.parseFloat(style.getPropertyValue("--inspection-route-duration"))
+    const duration = parseCssDuration(style.getPropertyValue("--inspection-route-duration"))
     const easing = style.getPropertyValue("--ease-in-out").trim()
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
     for (const element of card.querySelectorAll<HTMLElement>("[data-route-position]")) {
