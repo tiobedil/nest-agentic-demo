@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import type { ComponentProps, ReactNode } from "react"
 import { ArrowRight, Check, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -19,6 +19,7 @@ export function LoadingSurface({ children, label }: { children: ReactNode; label
 
 export function RouteCard({ state, live }: { state: RouteState; live: boolean }) {
   const stops = routeFor[state]
+  const [amarArrived, setAmarArrived] = useState(state !== "original")
   const cardRef = useRef<HTMLDivElement>(null)
   const positions = useRef(new Map<string, string>())
   const animations = useRef(new Map<string, Animation>())
@@ -30,6 +31,8 @@ export function RouteCard({ state, live }: { state: RouteState; live: boolean })
     const duration = parseCssDuration(style.getPropertyValue("--inspection-route-duration"))
     const easing = style.getPropertyValue("--ease-in-out").trim()
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    let cancelled = false
+    if (state === "original") setAmarArrived(false)
     for (const element of card.querySelectorAll<HTMLElement>("[data-route-position]")) {
       const key = element.dataset.routePosition!
       const target = element.style.transform
@@ -39,11 +42,19 @@ export function RouteCard({ state, live }: { state: RouteState; live: boolean })
       if (previous && previous !== target && duration > 0 && easing && !reducedMotion) {
         const animation = element.animate([{ transform: previous }, { transform: target }], { duration, easing })
         animations.current.set(key, animation)
+        if (key === "visit-605" && state !== "original") {
+          setAmarArrived(false)
+          animation.onfinish = () => {
+            if (!cancelled) setAmarArrived(true)
+          }
+        }
       } else {
         animations.current.delete(key)
+        if (key === "visit-605" && state !== "original") setAmarArrived(true)
       }
       positions.current.set(key, target)
     }
+    return () => { cancelled = true }
   }, [state])
 
   useEffect(() => {
@@ -51,54 +62,57 @@ export function RouteCard({ state, live }: { state: RouteState; live: boolean })
     return () => { for (const animation of current.values()) animation.cancel() }
   }, [])
 
-  const constraint = state === "original"
+  const constraint = !amarArrived
     ? { row: "bg-amber-50", label: "text-amber-800", pill: "bg-amber-100 text-amber-900" }
-    : { row: "bg-violet-50", label: "text-violet-700", pill: "bg-violet-100 text-violet-800" }
-  return <Card ref={cardRef} className="@container gap-0 p-4 shadow-none">
-    <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
+    : { row: "bg-violet-100 ring-1 ring-inset ring-violet-500", label: "text-violet-800", pill: "bg-violet-600 text-white" }
+  return <Card ref={cardRef} className="@container h-fit shrink-0 gap-0 p-4 shadow-none">
+    <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
       <div><p className="text-xs text-slate-500">Technician 4 · Afternoon visits</p><h2 className="mt-1 text-base font-semibold text-slate-800">{state === "original" ? "Tentative route" : state === "exception" ? "Updated tentative route" : "Optimised route"}</h2></div>
-      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">{live ? "Confirmed" : "Tentative"}</span>
+      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${live ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700"}`}>{live ? "Confirmed" : "Tentative"}</span>
     </div>
-    <div className="grid grid-cols-[4rem_minmax(0,1fr)_3rem] sm:grid-cols-[4.5rem_minmax(0,1fr)_4rem] gap-2 px-2 text-xs text-slate-500" aria-hidden="true"><span>Time</span><span>Apartment</span><span className="text-right">Floor</span></div>
-    <div role="list" aria-label="Technician 4 afternoon route" className="relative mt-2 h-[32rem]">
+    <div className={`grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none ${state === "original" ? "grid-rows-[0fr]" : "grid-rows-[1fr]"}`}><div className="min-h-0 overflow-hidden">
+    <div data-route-efficiency className="mb-3 grid" aria-live="polite">
+      {([
+        { phase: "exception", text: "3 floor changes · Optimisation pending", colour: "bg-amber-50 text-amber-800" },
+        { phase: "optimised", text: "Floor changes: 3 → 1 · 2 fewer", colour: "bg-emerald-50 text-emerald-800" },
+      ] as const).map(item => <p key={item.phase} aria-hidden={state !== item.phase} className={`col-start-1 row-start-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-opacity duration-200 ease-out motion-reduce:transition-none ${item.colour} ${state === item.phase ? "opacity-100" : "pointer-events-none opacity-0"}`}>{item.text}</p>)}
+    </div>
+    </div></div>
+    <div className="grid grid-cols-[4rem_minmax(0,1fr)_auto] sm:grid-cols-[4.5rem_minmax(0,1fr)_auto] gap-2 px-2 text-xs text-slate-500" aria-hidden="true"><span>Time</span><span>Apartment</span><span className="text-right">Floor</span></div>
+    <div role="list" aria-label="Technician 4 afternoon route" className="relative mt-2 shrink-0" style={{ height: stops.length * 52 }}>
       <div aria-hidden="true" data-route-times className="pointer-events-none absolute inset-0 z-20">
-        {stops.map(stop => <div key={stop.time} className="flex h-16 items-center px-2"><span className="text-xs tabular-nums text-slate-600">{stop.time}</span></div>)}
+        {stops.map(stop => <div key={stop.time} className="flex h-[52px] items-center px-2"><span className="text-xs tabular-nums text-slate-600">{stop.time}</span></div>)}
       </div>
-      {stops.map((stop, index) => <div key={stop.unit} role="listitem" data-route-position={`visit-${stop.unit}`} data-unit={stop.unit} data-time={stop.time} className={`oct-route-row absolute inset-x-0 top-0 grid h-16 grid-cols-[4rem_minmax(0,1fr)_3rem] sm:grid-cols-[4.5rem_minmax(0,1fr)_4rem] items-center gap-2 rounded-lg px-2 ${stop.amar ? `z-10 ${constraint.row}` : "bg-white"}`} style={{ transform: `translate3d(0, ${index * 100}%, 0)` }}>
+      {stops.map((stop, index) => <div key={stop.unit} role="listitem" data-route-position={`visit-${stop.unit}`} data-unit={stop.unit} data-time={stop.time} className={`oct-route-row absolute inset-x-0 top-0 grid h-[52px] grid-cols-[4rem_minmax(0,1fr)_auto] sm:grid-cols-[4.5rem_minmax(0,1fr)_auto] items-center gap-2 rounded-lg px-2 ${stop.amar ? `z-10 ${constraint.row}` : "bg-white"}`} style={{ transform: `translate3d(0, ${index * 100}%, 0)` }}>
         <span className="text-xs tabular-nums text-slate-600 opacity-0">{stop.time}</span>
-        <div className="min-w-0"><p className="text-sm font-semibold text-slate-700">Unit {stop.unit}{stop.amar && " · Amar"}</p>{stop.amar && <p className={`mt-1 text-[11px] leading-4 ${constraint.label}`}>{state === "original" ? "Resident constraint" : "Pinned · Resident constraint"}</p>}</div>
-        <span className={`justify-self-end rounded-full px-2 py-1 text-[11px] font-medium ${stop.amar ? constraint.pill : "bg-slate-100 text-slate-700"}`}>Floor {stop.floor}</span>
+        <div className="min-w-0"><p className="text-sm font-semibold text-slate-700">Unit {stop.unit}{stop.amar && " · Amar"}</p></div>
+        <div className="flex items-center justify-self-end gap-2 whitespace-nowrap">{stop.amar && <span className={`text-[11px] ${constraint.label}`}>{state === "original" ? "Resident constraint" : "Approved"}</span>}<span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${stop.amar ? constraint.pill : stop.floor === 2 ? "bg-sky-100 text-sky-900" : "bg-violet-200 text-violet-900"}`}>Floor {stop.floor}</span></div>
       </div>)}
     </div>
   </Card>
 }
 
-export function PlanSummary({ approved, adjusted, routesOptimised, onReview, disabled = false }: { approved: boolean; adjusted: boolean; routesOptimised: boolean; onReview: () => void; disabled?: boolean }) {
-  const metrics = approved
-    ? [{ value: "116", label: "Apartments" }, { value: "6", label: "Technicians" }, { value: adjusted ? "1" : "0", label: "Resident-specific adjustment" }, { value: "6", label: routesOptimised ? "Optimised routes" : "Routes being checked" }]
-    : [{ value: "116", label: "Apartments" }, { value: "6", label: "Technicians" }, { value: "115", label: "Standard schedule" }]
+export function PlanSummary({ approved, adjusted, routesOptimised, onConfirm, disabled = false }: { approved: boolean; adjusted: boolean; routesOptimised: boolean; onConfirm?: () => void; disabled?: boolean }) {
   return <Card className="gap-0 p-4 shadow-none">
-    <div className="flex flex-wrap items-start justify-between gap-2"><div><h2 className="text-base font-semibold text-slate-800">{approved && routesOptimised ? "Tower C inspection plan ready" : "Tower C — Fire-safety inspections"}</h2><p className="mt-1 text-xs text-slate-500">Tuesday, 13 October · 9:00 AM–6:00 PM</p></div><span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700">Tentative</span></div>
-    <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">{metrics.map(item => <div key={item.label} className="rounded-lg bg-slate-50 p-3"><p className="text-xl font-semibold text-slate-800">{item.value}</p><p className="mt-1 text-xs leading-5 text-slate-600">{item.label}</p></div>)}{!approved && <Button variant="ghost" disabled={disabled} onClick={onReview} className="h-auto flex-col items-start gap-1 whitespace-normal rounded-lg bg-amber-50 p-3 text-left text-amber-900 hover:bg-amber-100"><span className="text-xl font-semibold">1</span><span className="text-xs">Requires review →</span></Button>}</div>
-    {!approved && <p className="mt-4 text-sm leading-6 text-slate-600">I found one resident where the standard appointment is more likely to result in failed access.</p>}
+    <div className="flex items-center justify-between gap-2"><h2 className="text-sm font-semibold text-slate-800">{approved ? "Tower C · Inspection plan ready" : "Tower C · Fire-safety inspections"}</h2><span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">Tentative</span></div>
+    <p className="mt-3 text-xs text-slate-700">116 apartments · 6 technicians · {approved ? `${adjusted ? 1 : 0} resident adjustment` : "1 requires review"}</p>
+    {approved && routesOptimised && <p className="mt-3 flex flex-nowrap items-center gap-2 text-xs leading-4 text-slate-700"><CheckCircle2 aria-hidden="true" className="block size-3.5 shrink-0 text-emerald-700" /><span className="translate-y-px whitespace-nowrap">All routes optimised{adjusted && " · Amar's 5:45 PM slot preserved"}</span></p>}
+    {approved && <><p className="mt-3 text-[11px] text-slate-500">No resident notifications sent yet.</p><InspectionAction disabled={disabled} onClick={onConfirm} className="mt-3 text-sm">Confirm &amp; notify residents<ArrowRight aria-hidden="true" className="size-4" /></InspectionAction></>}
   </Card>
 }
 
-export function ResidentCard({ onApply, onKeep, disabled = false }: { onApply: () => void; onKeep: () => void; disabled?: boolean }) {
-  const [selected, setSelected] = useState("recommended")
-  const appointmentId = useId()
+export function ResidentCard({ onApply, applied = null, disabled = false }: { onApply: () => void; applied?: boolean | null; disabled?: boolean }) {
+  if (applied !== null) return <ResidentAdjustment adjusted={applied} />
   return <Card className="gap-0 p-4 shadow-none">
-    <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-medium text-amber-800">Requires review</p><h2 className="mt-1 text-lg font-semibold text-slate-800">Amar Sundaran</h2><p className="text-sm text-slate-500">Unit 605</p></div><span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-900">Higher failed-access risk</span></div>
-    <div className="mt-4 space-y-3 rounded-lg bg-slate-50 p-3">{[
-      ["3 recent weekday daytime visits", "No access"], ["Resident-present access", "Previously requested for in-unit visits"], ["2 previous evening visits", "Successfully completed after 5:30 PM"],
-    ].map(([title, body]) => <div key={title}><p className="text-xs font-medium text-slate-700">{title}</p><p className="mt-1 text-xs leading-5 text-slate-500">{body}</p></div>)}</div>
-    <fieldset disabled={disabled} className="mt-4"><legend className="text-sm font-medium text-slate-700">Choose Amar’s appointment</legend><div className="mt-2 grid gap-2 sm:grid-cols-2">{[
-      { id: "standard", title: "Keep standard slot", time: "4:30 PM", description: "Current tentative appointment" },
-      { id: "recommended", title: "Recommended for Amar", time: "5:45 PM", description: "Higher likelihood of successful access" },
-    ].map(option => <label key={option.id} className={`flex cursor-pointer items-start gap-2 rounded-lg border p-3 ${selected === option.id ? "border-violet-300 bg-violet-50" : "border-slate-200"}`}><input type="radio" name={appointmentId} value={option.id} checked={selected === option.id} onChange={() => setSelected(option.id)} className="mt-1 accent-violet-600" /><span><span className="block text-xs font-medium text-slate-700">{option.title}</span><span className="mt-1 block text-lg font-semibold text-slate-800">{option.time}</span><span className="mt-1 block text-xs leading-5 text-slate-600">{option.description}</span></span></label>)}</div></fieldset>
-    <p className="mt-4 text-sm leading-6 text-slate-600">His previous access history indicates that a later appointment is more likely to result in successful access.</p>
-    {selected === "standard" && <p className="mt-3 rounded-lg bg-amber-50 p-3 text-xs leading-5 text-amber-900">Keeping 4:30 PM leaves the higher failed-access risk in place. Resident-present access will still be required.</p>}
-    <InspectionAction disabled={disabled} onClick={selected === "recommended" ? onApply : onKeep} className="mt-4">{selected === "recommended" ? "Use 5:45 PM" : "Keep 4:30 PM"}<ArrowRight aria-hidden="true" className="size-4" /></InspectionAction>
+    <div className="flex items-center justify-between gap-3"><h2 className="text-sm font-semibold text-slate-800">Amar Sundaran · Unit 605</h2><span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-900">Access risk</span></div>
+    <p className="mt-1 text-[11px] text-slate-500">Resident Intelligence · Access recommendation</p>
+    <p className="mt-3 text-xs leading-5 text-slate-700">3 failed daytime visits · 2 successful evening visits · Resident presence required</p>
+    <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-t border-slate-100 pt-3">
+      <div className="flex flex-col gap-1 text-slate-700"><span className="text-[11px]">Current</span><span className="text-sm font-medium">4:30 PM</span></div>
+      <ArrowRight aria-hidden="true" className="size-3 text-slate-500" />
+      <div className="flex flex-col items-end gap-1 text-violet-700"><span className="text-[11px]">AI recommended</span><span className="text-sm font-medium">5:45 PM</span></div>
+    </div>
+    <InspectionAction disabled={disabled} onClick={onApply} className="mt-3 text-sm">Use 5:45 PM</InspectionAction>
   </Card>
 }
 
@@ -108,10 +122,9 @@ export function FullSchedule({ state, scheduleId, disabled = false }: { state: R
 
 
 export function ResidentAdjustment({ adjusted }: { adjusted: boolean }) {
-  return <Card className="gap-3 p-4 shadow-none">
-    <div><h2 className="text-sm font-semibold text-slate-800">Amar Sundaran · Unit 605</h2><p className={`mt-1 text-sm ${adjusted ? "text-violet-800" : "text-amber-800"}`}>{adjusted ? "5:45 PM" : "4:30 PM"} · Resident-present access</p></div>
-    {!adjusted && <p className="rounded-lg bg-amber-50 p-3 text-xs leading-5 text-amber-900">Standard slot retained. Higher failed-access risk acknowledged; no resident-specific time adjustment was made.</p>}
-    <p className="text-sm leading-6 text-slate-600">No appointments have been communicated yet.</p>
+  return <Card className="gap-0 p-3 shadow-none">
+    <div className="flex items-center justify-between gap-3"><h2 className="flex items-center gap-1.5 text-sm font-semibold text-slate-800"><CheckCircle2 aria-hidden="true" className="size-3.5 text-emerald-700" />Amar Sundaran · Unit 605</h2><span className={`rounded-full px-2 py-0.5 text-[11px] ${adjusted ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700"}`}>{adjusted ? "Applied" : "Retained"}</span></div>
+    <p className="mt-1 text-xs text-slate-600">{adjusted ? "5:45 PM approved" : "4:30 PM retained · Access risk acknowledged"} · Resident-present access</p>
   </Card>
 }
 
