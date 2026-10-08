@@ -302,28 +302,10 @@ body {
 }
 
 .streaming-word {
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-  animation: streaming-word-enter 200ms var(--ease-out) both;
-}
-
-@keyframes streaming-word-enter {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .streaming-word {
-    animation-duration: 100ms;
-  }
+  display: inline-block;
+  white-space: pre;
 }
 
 .streaming-cursor {
-  transition-property: transform;
-  transition-timing-function: var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .streaming-cursor {
-    transition: none;
-  }
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }
