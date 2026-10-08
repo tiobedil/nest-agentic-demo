@@ -68,7 +68,7 @@ export function RouteCard({ state, live }: { state: RouteState; live: boolean })
   return <Card ref={cardRef} className="@container h-fit shrink-0 gap-0 p-4 shadow-none">
     <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
       <div><p className="text-xs text-slate-500">Technician 4 · Afternoon visits</p><h2 className="mt-1 text-base font-semibold text-slate-800">{state === "original" ? "Tentative route" : state === "exception" ? "Updated tentative route" : "Optimised route"}</h2></div>
-      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">{live ? "Confirmed" : "Tentative"}</span>
+      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${live ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700"}`}>{live ? "Confirmed" : "Tentative"}</span>
     </div>
     <div className={`grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none ${state === "original" ? "grid-rows-[0fr]" : "grid-rows-[1fr]"}`}><div className="min-h-0 overflow-hidden">
     <div data-route-efficiency className="mb-3 grid" aria-live="polite">
@@ -123,7 +123,7 @@ export function FullSchedule({ state, scheduleId, disabled = false }: { state: R
 
 export function ResidentAdjustment({ adjusted }: { adjusted: boolean }) {
   return <Card className="gap-0 p-3 shadow-none">
-    <div className="flex items-center justify-between gap-3"><h2 className="flex items-center gap-1.5 text-sm font-semibold text-slate-800"><CheckCircle2 aria-hidden="true" className="size-3.5 text-emerald-700" />Amar Sundaran · Unit 605</h2><span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">{adjusted ? "Applied" : "Retained"}</span></div>
+    <div className="flex items-center justify-between gap-3"><h2 className="flex items-center gap-1.5 text-sm font-semibold text-slate-800"><CheckCircle2 aria-hidden="true" className="size-3.5 text-emerald-700" />Amar Sundaran · Unit 605</h2><span className={`rounded-full px-2 py-0.5 text-[11px] ${adjusted ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700"}`}>{adjusted ? "Applied" : "Retained"}</span></div>
     <p className="mt-1 text-xs text-slate-600">{adjusted ? "5:45 PM approved" : "4:30 PM retained · Access risk acknowledged"} · Resident-present access</p>
   </Card>
 }
