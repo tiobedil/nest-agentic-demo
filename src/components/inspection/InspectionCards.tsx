@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef } from "react"
 import type { ComponentProps, ReactNode } from "react"
-import { ArrowRight, Check, CheckCircle2, Pin } from "lucide-react"
+import { ArrowRight, Check, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { buildingSchedule, routeFor } from "@/lib/inspection-plan"
@@ -53,22 +53,22 @@ export function RouteCard({ state, live }: { state: RouteState; live: boolean })
 
   const constraint = state === "original"
     ? { row: "bg-amber-50", label: "text-amber-800", pill: "bg-amber-100 text-amber-900" }
-    : { row: "bg-violet-100 ring-2 ring-inset ring-violet-500", label: "text-violet-800", pill: "bg-violet-600 text-white" }
-  return <Card ref={cardRef} className="@container gap-0 p-4 shadow-none">
-    <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
+    : { row: "bg-violet-100 ring-1 ring-inset ring-violet-500", label: "text-violet-800", pill: "bg-violet-600 text-white" }
+  return <Card ref={cardRef} className="@container h-fit shrink-0 gap-0 p-4 shadow-none">
+    <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
       <div><p className="text-xs text-slate-500">Technician 4 · Afternoon visits</p><h2 className="mt-1 text-base font-semibold text-slate-800">{state === "original" ? "Tentative route" : state === "exception" ? "Updated tentative route" : "Optimised route"}</h2></div>
-      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">{live ? "Confirmed" : "Tentative"}</span>
+      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">{live ? "Confirmed" : "Tentative"}</span>
     </div>
-    <div className="grid grid-cols-[4rem_minmax(0,1fr)_3rem] sm:grid-cols-[4.5rem_minmax(0,1fr)_4rem] gap-2 px-2 text-xs text-slate-500" aria-hidden="true"><span>Time</span><span>Apartment</span><span className="text-right">Floor</span></div>
-    {state !== "original" && <p data-route-efficiency className={`mt-3 rounded-lg px-3 py-2 text-xs font-medium ${state === "optimised" ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"}`}>{state === "optimised" ? "Floor changes: 3 → 1 · 2 fewer" : "3 floor changes · Optimisation pending"}</p>}
-    <div role="list" aria-label="Technician 4 afternoon route" className="relative mt-2 h-[32rem]">
+    <div className="grid grid-cols-[4rem_minmax(0,1fr)_auto] sm:grid-cols-[4.5rem_minmax(0,1fr)_auto] gap-2 px-2 text-xs text-slate-500" aria-hidden="true"><span>Time</span><span>Apartment</span><span className="text-right">Floor</span></div>
+    {state !== "original" && <p data-route-efficiency className={`mt-2 rounded-lg px-2 py-1.5 text-xs font-medium ${state === "optimised" ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"}`}>{state === "optimised" ? "Floor changes: 3 → 1 · 2 fewer" : "3 floor changes · Optimisation pending"}</p>}
+    <div role="list" aria-label="Technician 4 afternoon route" className="relative mt-2 shrink-0" style={{ height: stops.length * 52 }}>
       <div aria-hidden="true" data-route-times className="pointer-events-none absolute inset-0 z-20">
-        {stops.map(stop => <div key={stop.time} className="flex h-16 items-center px-2"><span className="text-xs tabular-nums text-slate-600">{stop.time}</span></div>)}
+        {stops.map(stop => <div key={stop.time} className="flex h-[52px] items-center px-2"><span className="text-xs tabular-nums text-slate-600">{stop.time}</span></div>)}
       </div>
-      {stops.map((stop, index) => <div key={stop.unit} role="listitem" data-route-position={`visit-${stop.unit}`} data-unit={stop.unit} data-time={stop.time} className={`oct-route-row absolute inset-x-0 top-0 grid h-16 grid-cols-[4rem_minmax(0,1fr)_3rem] sm:grid-cols-[4.5rem_minmax(0,1fr)_4rem] items-center gap-2 rounded-lg px-2 ${stop.amar ? `z-10 ${constraint.row}` : "bg-white"}`} style={{ transform: `translate3d(0, ${index * 100}%, 0)` }}>
+      {stops.map((stop, index) => <div key={stop.unit} role="listitem" data-route-position={`visit-${stop.unit}`} data-unit={stop.unit} data-time={stop.time} className={`oct-route-row absolute inset-x-0 top-0 grid h-[52px] grid-cols-[4rem_minmax(0,1fr)_auto] sm:grid-cols-[4.5rem_minmax(0,1fr)_auto] items-center gap-2 rounded-lg px-2 ${stop.amar ? `z-10 ${constraint.row}` : "bg-white"}`} style={{ transform: `translate3d(0, ${index * 100}%, 0)` }}>
         <span className="text-xs tabular-nums text-slate-600 opacity-0">{stop.time}</span>
-        <div className="min-w-0"><p className="text-sm font-semibold text-slate-700">Unit {stop.unit}{stop.amar && " · Amar"}</p>{stop.amar && <p className={`mt-1 text-[11px] leading-4 ${constraint.label}`}>{state !== "original" && <Pin aria-hidden="true" className="mr-1 inline size-3" />}{state === "original" ? "Resident constraint" : "Pinned · 5:45 PM approved"}</p>}</div>
-        <span className={`justify-self-end rounded-full px-2 py-1 text-[11px] font-medium ${stop.amar ? constraint.pill : stop.floor === 2 ? "bg-sky-100 text-sky-900" : "bg-violet-200 text-violet-900"}`}>Floor {stop.floor}</span>
+        <div className="min-w-0"><p className="text-sm font-semibold text-slate-700">Unit {stop.unit}{stop.amar && " · Amar"}</p></div>
+        <div className="flex items-center justify-self-end gap-2 whitespace-nowrap">{stop.amar && <span className={`text-[11px] ${constraint.label}`}>{state === "original" ? "Resident constraint" : "Approved"}</span>}<span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${stop.amar ? constraint.pill : stop.floor === 2 ? "bg-sky-100 text-sky-900" : "bg-violet-200 text-violet-900"}`}>Floor {stop.floor}</span></div>
       </div>)}
     </div>
   </Card>

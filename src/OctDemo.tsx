@@ -197,7 +197,7 @@ export function OctDemo() {
       <header className="shrink-0 border-b border-slate-200 bg-white px-4 py-4 lg:px-5">
         <h2 className="text-base font-semibold text-slate-800">Inspection schedule</h2>
       </header>
-      {panel && <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto p-4 lg:p-5">
+      {panel && <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
         {panel.loading ? <LoadingSurface label="Loading tentative technician route"><RouteCard state={panel.state} live={panel.confirmed} /></LoadingSurface> : <RouteCard state={panel.state} live={panel.confirmed} />}
         {panel.reviewable && <>
           <InspectionAction data-schedule-review variant="outline" className="border-slate-200" aria-expanded={showFullSchedule} aria-controls="building-schedule" onClick={() => setShowFullSchedule(value => !value)}>{showFullSchedule ? "Hide full schedule" : "Review full schedule"}</InspectionAction>
