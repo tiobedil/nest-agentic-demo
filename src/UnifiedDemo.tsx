@@ -27,7 +27,7 @@ function UnsupportedReply({ onDone }: { onDone: () => void }) {
   }, [])
 
   return <div className="flex flex-col gap-3">
-    <Thinking title="Thinking" steps={unsupportedSteps} completed={progress} done={thought} />
+    <Thinking title="Thinking" completedTitle="Checked available workflows" steps={unsupportedSteps} completed={progress} done={thought} />
     {thought && <div>
       <StreamingText text={unsupportedReplyLines[0]} speed={100} autoScroll={false} onDone={finishFirstLine} />
       {firstLineDone && <StreamingText text={unsupportedReplyLines[1]} speed={100} autoScroll={false} onDone={onDone} />}

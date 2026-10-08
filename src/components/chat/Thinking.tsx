@@ -10,8 +10,9 @@ type ThinkingProps = {
   completed?: number
   title?: string
   disabled?: boolean
+  completedTitle?: string
 }
 
-export function Thinking({ title = "Thinking", steps = defaultSteps, ...props }: ThinkingProps) {
-  return <Processing {...props} title={title} steps={steps} stages={stages} doneTitle="Thought for 1 second" />
+export function Thinking({ title = "Thinking", steps = defaultSteps, completedTitle = "Reviewed request", ...props }: ThinkingProps) {
+  return <Processing {...props} title={title} steps={steps} stages={stages} completedTitle={completedTitle} />
 }

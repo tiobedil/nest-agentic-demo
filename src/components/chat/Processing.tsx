@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useLayoutEffect, useState } from "react"
 import { ChevronDown, Check, Sparkle, LoaderCircle } from "lucide-react"
 
 const STAGES = [1000, 1600, 1800, 1200]
@@ -15,11 +15,17 @@ function LoaderGrid() {
   )
 }
 
-export function Processing({ onDone, done: forcedDone, title, hideSteps, stages = STAGES, doneTitle, steps = rows, completed, disabled = false }: { onDone?: () => void; done?: boolean; title?: string; hideSteps?: boolean; stages?: number[]; doneTitle?: string; steps?: string[]; completed?: number; disabled?: boolean }) {
+export function Processing({ onDone, done: forcedDone, title, hideSteps, stages = STAGES, doneTitle, completedTitle = "Processed request", steps = rows, completed, disabled = false }: { onDone?: () => void; done?: boolean; title?: string; hideSteps?: boolean; stages?: number[]; doneTitle?: string; completedTitle?: string; steps?: string[]; completed?: number; disabled?: boolean }) {
   const [stage, setStage] = useState(0)
   const controlled = completed !== undefined
   const activeStage = completed ?? stage
   const working = !forcedDone && activeStage < (controlled ? steps.length : stages.length)
+  const [startedAt] = useState(() => performance.now())
+  const [duration, setDuration] = useState(0)
+  useLayoutEffect(() => {
+    if (!working) setDuration(Math.max(0.1, Math.round((performance.now() - startedAt) / 100) / 10))
+  }, [working, startedAt])
+  const completionText = doneTitle ?? `${completedTitle} in ${duration} ${duration === 1 ? "second" : "seconds"}`
   const [open, setOpen] = useState(!forcedDone)
   useEffect(() => { setOpen(!forcedDone ? true : false) }, [forcedDone])
   useEffect(() => {
@@ -32,7 +38,7 @@ export function Processing({ onDone, done: forcedDone, title, hideSteps, stages 
     <div className="w-full font-sans" data-thinking data-thinking-progress={forcedDone ? steps.length : activeStage} data-thinking-total={steps.length}>
       <button type="button" disabled={disabled} aria-expanded={!hideSteps && open} onClick={() => setOpen(v => !v)} className="flex w-fit items-center gap-2 rounded text-left pl-[1px] focus-visible:outline-2 focus-visible:outline-violet-600">
         <span className="flex size-[13px] shrink-0 items-center justify-center">{working ? <LoaderGrid /> : <Sparkle className="size-3 text-muted-foreground/60" fill="none" />}</span>
-        <span className={working ? "bg-clip-text text-[12px] font-medium text-transparent" : "text-[12px] font-normal text-muted-foreground"} style={working ? { backgroundImage: "linear-gradient(90deg, color-mix(in oklab, var(--muted-foreground) 35%, transparent) 35%, var(--muted-foreground) 50%, color-mix(in oklab, var(--muted-foreground) 35%, transparent) 65%)", backgroundSize: "200% 100%", animation: "shimmer-text 1.4s linear infinite" } : undefined}>{working ? (title ?? "Processing") : (doneTitle ?? title ?? "Processed for 5 seconds")}</span>
+        <span className={working ? "bg-clip-text text-[12px] font-medium text-transparent" : "text-[12px] font-normal text-muted-foreground"} style={working ? { backgroundImage: "linear-gradient(90deg, color-mix(in oklab, var(--muted-foreground) 35%, transparent) 35%, var(--muted-foreground) 50%, color-mix(in oklab, var(--muted-foreground) 35%, transparent) 65%)", backgroundSize: "200% 100%", animation: "shimmer-text 1.4s linear infinite" } : undefined}>{working ? (title ?? "Processing") : completionText}</span>
         {!hideSteps && <ChevronDown className={`size-4 text-muted-foreground/60 transition ${open ? "rotate-180" : ""}`} />}
       </button>
       {!hideSteps && open && (

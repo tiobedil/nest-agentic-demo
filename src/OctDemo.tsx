@@ -97,12 +97,13 @@ function AssistantReply({ message, active, confirmed, thinkBeforeReply = false, 
   const showPlanningResident = ["plan-resident", "plan-panel", "ready"].includes(mode)
   const reviewCards = <PlanSummary confirmed={confirmed} approved adjusted={adjusted} routesOptimised disabled={disabled} onConfirm={() => onDecision(id, "confirm", adjusted)} />
   const traceTitle = phase === "planning" ? "Planning Lana Tower inspections" : phase === "routing" ? "Automatically optimising technician route" : phase === "review" ? "Preparing inspection plan" : "Confirming and notifying residents"
+  const traceCompletedTitle = phase === "planning" ? "Planned Lana Tower inspections" : phase === "routing" ? "Optimised technician route" : phase === "review" ? "Prepared inspection plan" : "Confirmed inspections and notified residents"
   const showTrace = mode !== "intro"
 
   return <div data-assistant-message={id} data-phase={phase} data-mode={mode} className="flex flex-col gap-3">
-    {thinkBeforeReply && <Processing done={thought} onDone={finishThinking} title="Thinking" doneTitle="Thought for 1 second" hideSteps stages={[1500]} />}
+    {thinkBeforeReply && <Processing done={thought} onDone={finishThinking} title="Thinking" completedTitle="Reviewed inspection request" hideSteps stages={[1500]} />}
     {thought && <StreamingText text={intro} speed={100} onDone={introDone} autoScroll={false} />}
-    {showTrace && <Thinking title={traceTitle} steps={steps} completed={traceProgress} done={traceProgress === steps.length && mode !== "processing"}  />}
+    {showTrace && <Thinking title={traceTitle} completedTitle={traceCompletedTitle} steps={steps} completed={traceProgress} done={traceProgress === steps.length && mode !== "processing"}  />}
     {phase === "planning" && loading && <LoadingSurface label="Loading Lana Tower inspection summary">{planningSummary}</LoadingSurface>}
     {phase === "planning" && showPlanningSummary && planningSummary}
     {phase === "planning" && showPlanningResident && planningResident}
